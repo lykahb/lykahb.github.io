@@ -1,0 +1,6 @@
+resolver: lts-20.18
+allow-newer: true
+packages:
+  - .
+extra-deps:
+  - hakyll-4.15.1.1
