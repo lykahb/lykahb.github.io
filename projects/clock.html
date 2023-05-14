@@ -1,0 +1,290 @@
+---
+title: Nonius Clock
+---
+
+<script type="application/javascript" src="/js/petite-vue-0.4.1.js"></script>
+<script type="application/javascript" src="/js/clock.js"></script>
+
+<style>
+#clockAndControls {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    grid-auto-rows: minmax(100px, auto);
+}
+
+#clock {
+    font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+    grid-column: 1 / 3;
+    grid-row: 1;
+}
+
+#controls {
+    font-size: 12px;
+    display: grid;
+    gap: 5px;
+    align-items: center;
+    justify-items: start;
+    grid-column: 1 / 3;
+    grid-auto-rows: auto;
+    grid-template-columns: repeat(12, 1fr);
+}
+
+#controls > h4 {
+    grid-column: 1 / -1;
+    grid-row: auto;
+}
+
+#controls > label, #controls > .labelForInputGroup {
+    grid-column: 1 / span 4;
+}
+
+#controls > .labelForInputGroup {
+    /* This is a hack - it relies on the fact that all input groups only have two rows */
+    grid-row: span 2;
+}
+
+#controls > .fullRow {
+    grid-column: 1 / -1;
+}
+
+#controls > input, #controls > button {
+    grid-column: 5 / span 8;
+}
+
+#controls > label.inputGroup {
+    grid-column: 5 / span 2;
+}
+
+#controls > label.inputGroup:has(input) {
+    grid-column: 5 / -1;
+}
+
+#controls > label > input[type='radio'] {
+    margin-right: 1rem;
+}
+
+#innerDial {
+    stroke: black;
+}
+
+.hourMarker>line {
+    stroke: black;
+}
+
+.rotatingMinuteMarker, .fixedMinuteMarker {
+    fill: black;
+    stroke: none;
+}
+
+.rotatingHourMarker, .fixedHourMarker {
+    fill: white;
+    stroke: black;
+    stroke-width: 2px;
+}
+
+.fixedHourMarkerCircle {
+    r: 7px;
+    stroke: black;
+    fill: white;
+}
+
+.fixedMinuteMarkerCircle {
+    r: 10px;
+    stroke: black;
+    fill: white;
+}
+
+.rotatingDialInnerCircle, .rotatingDialOuterCircle {
+    fill: none;
+    stroke: black;
+    stroke-width: 0.1px;
+}
+
+.outerDialCircle {
+    fill: white;
+    stroke: black;
+    stroke-width: 1px;
+}
+
+.minuteMarker {
+    font-size: 12px;
+}
+
+.hourMarker {
+    font-size: 8px;
+    font-weight: bold;
+}
+</style>
+
+<p>
+    A modern watch is less of a practical device and more a style choice. I'd like to present a novel quirky way to display time.
+    This clock face only needs one moving part to tell time - the rotating ring. Yet, unlike a clock with only an hour hand, it has a precision of under one minute. The idea is to add an auxiliary set of minute and hour marks - similar to the design of a vernier scale or nonius on the measuring instruments.
+</p>
+
+<p>
+    How do you read time? The dial has marks for minutes both on the rotating ring and on the fixed ring around it. A pair of marks aligns at the current minute. The marks for the hours are also indicated with alignment - although the fixed marks for hours are on the circle inside of the rotating ring. The marks are wide enough that the marks get disconnected after the minute or hour are over.
+</p>
+
+<p>This post continues below, but first let's see the clock in action:</p>
+
+<div id="clockAndControls">
+    <svg id="clock" viewBox="0 0 400 400" @vue:mounted="setupUpdate">
+        <defs>
+            <path id="rotatingMinuteMarker"
+                :d="markerPath(visuals.radiusOfInnerFixedDial, visuals.radiusOfRotatingDial, visuals.minuteMarkerThicknessFactor * Math.abs(params.angleDeltaOfRotatingDialPerMinute), false)"></path>
+            <path id="fixedMinuteMarker"
+                :d="markerPath(visuals.radiusOfOuterDial - visuals.fixedMinuteMarkerLength, visuals.radiusOfOuterDial, visuals.minuteMarkerThicknessFactor * Math.abs(params.angleDeltaOfRotatingDialPerMinute), false)"></path>
+            <path id="fixedHourMarkerPath"
+                :d="markerPath(visuals.radiusOfInnerFixedDial, visuals.radiusOfInnerFixedDial / visuals.phi, 60 * Math.abs(params.angleDeltaOfRotatingDialPerMinute), false)"></path>
+            <clipPath id="fixedHourMarkerClipPath">
+                <use href="#fixedHourMarkerPath" />
+            </clipPath>
+            <use id="fixedHourMarker" href="#fixedHourMarkerPath" paint-order="fill" clip-path="url(#fixedHourMarkerClipPath)"></use>
+            <path id="rotatingHourMarkerPathClosed"
+                :d="markerPath(visuals.radiusOfInnerFixedDial, visuals.radiusOfInnerFixedDial + (visuals.radiusOfRotatingDial - visuals.radiusOfInnerFixedDial) / visuals.phi, 60 * Math.abs(params.angleDeltaOfRotatingDialPerMinute), true)"></path>
+            <path id="rotatingHourMarkerPath"
+                :d="markerPath(visuals.radiusOfInnerFixedDial, visuals.radiusOfInnerFixedDial + (visuals.radiusOfRotatingDial - visuals.radiusOfInnerFixedDial) / visuals.phi, 60 * Math.abs(params.angleDeltaOfRotatingDialPerMinute), false)"></path>
+            <clipPath id="rotatingHourMarkerClipPath">
+                <use href="#rotatingHourMarkerPath" />
+            </clipPath>
+            <use id="rotatingHourMarker" href="#rotatingHourMarkerPath" paint-order="fill" clip-path="url(#rotatingHourMarkerClipPath)"></use>
+            <use id="rotatingHourMarkerFirst" href="#rotatingHourMarkerPathClosed" paint-order="fill" clip-path="url(#rotatingHourMarkerClipPath)"></use>
+        </defs>
+        <g id="outerDial">
+            <circle class="outerDialCircle" :cx="centerCoordX" :cy="centerCoordY" :r="visuals.radiusOfOuterDial"></circle>
+
+            <g v-for="i in Array.from({length: 60}, (x, i) => i)"
+                :class="{minuteMarker: true, dividesByFive: (i % 5 === 0)}"
+                :transform="`rotate(${i * params.angleStepForMinuteMarksOnOuterDial} ${centerCoordX} ${centerCoordY})`">
+                <use href="#fixedMinuteMarker" class="fixedMinuteMarker"></use>
+            </g>
+
+            <g v-for="i in Array.from({length: 60}, (x, i) => i)"
+                :class="{minuteMarker: true, dividesByFive: (i % 5 === 0)}"
+                :transform="`rotate(${i * params.angleStepForMinuteMarksOnOuterDial} ${centerCoordX} ${centerCoordY})`">
+                <circle v-if="i % visuals.minuteLabelEvery === 0 || visuals.minuteLabel59 && i == 59" class="fixedMinuteMarkerCircle" :cx="centerCoordX" :cy="centerCoordY - visuals.radiusOfOuterDial + (visuals.radiusOfOuterDial - visuals.radiusOfRotatingDial) / 2"></circle>
+                <text v-if="i % visuals.minuteLabelEvery === 0 || visuals.minuteLabel59 && i == 59" :x="centerCoordX" :y="centerCoordY - visuals.radiusOfOuterDial + (visuals.radiusOfOuterDial - visuals.radiusOfRotatingDial) / 2"
+                    text-anchor="middle" dominant-baseline="central"
+                    :transform="`rotate(${-i * params.angleStepForMinuteMarksOnOuterDial} ${centerCoordX} ${centerCoordY - visuals.radiusOfOuterDial + (visuals.radiusOfOuterDial - visuals.radiusOfRotatingDial) / 2})`">
+                    {{ i }}
+                </text>
+            </g>
+        </g>
+        <circle :cx="centerCoordX" :cy="centerCoordY" :r="visuals.radiusOfRotatingDial" class="rotatingDialOuterCircle"></circle>
+        <g id="rotatingDial"
+            :transform="`rotate(${totalMinutes * params.angleDeltaOfRotatingDialPerMinute} ${centerCoordX} ${centerCoordY})`">
+            <use v-for="i in Array.from({length: params.numberOfMarksForMinutesOnRotatingDial}, (x, i) => i)"
+                href="#rotatingMinuteMarker"
+                :transform="`rotate(${i * (360 / params.numberOfMarksForMinutesOnRotatingDial)} ${centerCoordX} ${centerCoordY})`"
+                class="rotatingMinuteMarker">
+            </use>
+            <use v-for="i in Array.from({length: params.numberOfMarksForHoursOnRotatingDial}, (x, i) => i)"
+                :href="i == 0 ? '#rotatingHourMarkerFirst' : '#rotatingHourMarker'"
+                :transform="`rotate(${i * (360 / params.numberOfMarksForHoursOnRotatingDial)} ${centerCoordX} ${centerCoordY})`"
+                :class="{'rotatingHourMarker': true, 'isFirstMarker': i == 0}">
+            </use>
+        </g>
+        
+        <circle :cx="centerCoordX" :cy="centerCoordY" :r="visuals.radiusOfInnerFixedDial" class="rotatingDialInnerCircle"></circle>
+        <g id="innerHourDial">
+            <g v-for="i in Array.from({length: params.numberOfHours}, (x, i) => i)"
+                class="hourMarker"
+                :transform="`rotate(${i * params.angleStepForHourMarksOnInnerDial} ${centerCoordX} ${centerCoordY})`">
+                <use href="#fixedHourMarker" class="fixedHourMarker"></use>
+                <circle class="fixedHourMarkerCircle" :cx="centerCoordX"
+                    :cy="centerCoordY - visuals.radiusOfInnerFixedDial + (visuals.radiusOfInnerFixedDial * (1 - 1 / visuals.phi)) / 2"></circle>
+                <text :x="centerCoordX" :y="centerCoordY - visuals.radiusOfInnerFixedDial + (visuals.radiusOfInnerFixedDial * (1 - 1 / visuals.phi)) / 2"
+                    text-anchor="middle" dominant-baseline="central"
+                    :transform="`rotate(${-i * params.angleStepForHourMarksOnInnerDial} ${centerCoordX} ${centerCoordY - visuals.radiusOfInnerFixedDial + (visuals.radiusOfInnerFixedDial * (1 - 1 / visuals.phi)) / 2})`">
+                    {{ i == 0 ? params.numberOfHours : i }}
+                </text>
+            </g>
+        </g>
+    </svg>
+    <div id="controls">
+        <h4>Time</h4>
+        <label for="syncTime">Sync Time:</label><input name="syncTime" type="checkbox" v-model="options.syncTime" @change="updateClock()">
+        <button class="fullRow" @click="options.syncTime=false;time.hours=0;time.minutes=0;time.seconds=0">Set to midnight</button>
+        
+        <label for="hours">Hours</label>
+        <input id="hours" type="number" min="0" v-model="time.hours" @click="options.syncTime=false;">
+        
+        <label for="minutes">Minutes</label>
+        <input id="minutes" type="number" min="0" max="59" v-model="time.minutes" @click="options.syncTime=false;">
+        
+        <label for="seconds">Seconds</label>
+        <input id="seconds" type="number" min="0" max="59" v-model="time.seconds" @click="options.syncTime=false;">
+        
+        <h4>Parameter Presets</h4>
+
+        <button class="fullRow" @click="setParams('chaoticHours')">Chaotic hours, ordered minutes,  (default)</button>
+        <button class="fullRow" @click="setParams('chaoticMinutes')">Ordered hours, chaotic minutes</button>
+        <button class="fullRow" @click="setParams('chaoticHoursMinuteGap')">Chaotic hours, ordered minutes with a gap on 10-12</button>
+        <button class="fullRow" @click="setParams('oneWeekRotation')">The ring fully rotates in one week</button>
+
+        <h4>Parameters</h4>
+        <label for="numberOfMarksForHoursOnRotatingDial">Number of marks for hours on rotating dial:</label>
+        <input id="numberOfMarksForHoursOnRotatingDial" type="number" min="1" max="60" v-model="params.numberOfMarksForHoursOnRotatingDial">
+
+        <label for="numberOfMarksForMinutesOnRotatingDial">Number of marks for minutes on rotating dial:</label>
+        <input id="numberOfMarksForMinutesOnRotatingDial" type="number" disabled="true" v-model="params.numberOfMarksForMinutesOnRotatingDial">
+
+        <span class="labelForInputGroup">Middle ring rotates:</span>
+        <label class="inputGroup"><input type="radio" v-model="params.isRotatingClockwise" :value="true" />clockwise</label>
+        <label class="inputGroup"><input type="radio" v-model="params.isRotatingClockwise" :value="false" />counter-clockwise</label>
+
+        <span class="labelForInputGroup">Distance between hour markers:</span>
+        <label class="inputGroup"><input type="radio" v-model="params.areFixedHoursShorter" :value="true" />shorter</label>
+        <label class="inputGroup"><input type="radio" v-model="params.areFixedHoursShorter" :value="false" />longer</label>
+
+        <span class="labelForInputGroup">Distance between minute markers:</span>
+        <label class="inputGroup"><input type="radio" v-model="params.areFixedMinutesShorter" :value="true" />shorter</label>
+        <label class="inputGroup"><input type="radio" v-model="params.areFixedMinutesShorter" :value="false" />longer</label>
+        
+        <span class="labelForInputGroup">Number of hours on the dial:</span>
+        <label class="inputGroup"><input type="radio" v-model="params.numberOfHours" :value="12" />12</label>
+        <label class="inputGroup"><input type="radio" v-model="params.numberOfHours" :value="24" />24</label>
+
+        <label for="minuteLabelEvery">Display minute labels every N minutes:</label>
+        <input id="minuteLabelEvery" type="number" min="1" max="60" v-model="visuals.minuteLabelEvery"/> 
+
+        <label for="minuteLabel59">Display label for minute 59:</label>
+        <input id="minuteLabel59" type="checkbox" v-model="visuals.minuteLabel59"/>
+
+        <label for="minuteMarkerThicknessFactor">Thickness of minute marker.<br>At 1 there is no alignment after minute passes:</label>
+        <input id="minuteMarkerThicknessFactor" type="number" min="0.1" max="10" step="0.1" v-model="visuals.minuteMarkerThicknessFactor"/>
+        
+        <label>Rotating ring makes a full rotation in N hours:</label>
+        <input type="number" disabled :value="params.numberOfMarksForHoursOnRotatingDial * params.numberOfHours"/>
+    </div>
+</div>
+
+<hr>
+
+<p>
+    Imagine a clock that only has a single hour hand. That is how the tower clocks showed time in the old days.
+    And this is how <a target="_blank" href="https://meistersinger.com">Meister Singer</a> watches still tell time. It is a clean dial but less precise than a regular watch that has a minute hand.
+</p>
+
+<p>
+    If we could tell the slightest change of the position of the hour hand, we could tell time more accurately.
+    There is a tool for that - a <a target="_blank" href="https://en.wikipedia.org/wiki/Calipers">caliper with a sliding vernier scale</a>. 
+    It relies on the <a target="_blank" href="https://en.wikipedia.org/wiki/Vernier_acuity">vernier acuity</a> property of human eye - that is, the human eye can tell whether two lines are misaligned by a tiny distance, even when the distance is too small to notice otherwise. 
+</p>
+
+<p>
+    The rotation of the ring is much slower than the change of minutes and even hours - in other words, the alignment changes much faster than the ring rotates.
+
+<p>
+    The speed of the rotation and the position of marks are determined by the mathematical properties of the clock. At the core of them are the observations that the next mark for minute must align at 12 o'clock at the beginning of the hour, and that the minute mark alignments must change sixty times faster than the alignments for the hour marks. That is enough to calculate the layout of the marks for the given number of hour marks. The math gives us several solutions for layouts, so we can choose a more aesthetically pleasing one.
+</p>
+
+<p>
+    Reading the alignment is easier in the real world than on a screen. I would like to make a wall clock with this design. Printing on a transparent plastic and slowing down the rotation can be tricky, though. One possible simplification is to replace the rotating ring with a rotating circle and move the hours on the outside. To keep the face from getting too busy, we could display the hour markers as colored segments - with the thin lines for the minute markers over them. In most of the layouts there is a gap between the minute marks, which can house the date window.
+</p>
+
+<script>
+    const app = createClockApp();
+    app.mount("#clockAndControls");
+</script>

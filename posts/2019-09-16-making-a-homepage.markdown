@@ -1,5 +1,6 @@
 ---
 title: Making a homepage
+javascript: ['clock.js']
 ---
 
 After many iterations of polishing this website and taking time for the other projects, it is finally ready!

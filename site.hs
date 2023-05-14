@@ -22,6 +22,10 @@ main = hakyllWith config $ do
         route   idRoute
         compile compressCssCompiler
 
+    match "js/*" $ do
+        route   idRoute
+        compile copyFileCompiler
+
     match (fromList $ map (fromFilePath . (topLevel <>)) ["index.markdown", "projects.markdown"]) $ do
         route $ gsubRoute topLevel (const "") `composeRoutes` setExtension "html"
 
@@ -51,6 +55,11 @@ main = hakyllWith config $ do
                 >>= relativizeUrls
     match "templates/*" $ compile templateBodyCompiler
 
+    match "projects/*" $ do
+        route $ setExtension "html"
+        compile $ pandocCompiler
+            >>= loadAndApplyTemplate "templates/default.html" defaultContext
+            >>= relativizeUrls
 
 --------------------------------------------------------------------------------
 postCtx :: Context String

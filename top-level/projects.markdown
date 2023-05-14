@@ -12,3 +12,6 @@ This was a part of my Master's thesis on modelling algebraic data types in a rel
 
 ### [Neotools](https://github.com/lykahb/neotools)
 Command-line utility for AlphaSmart NEO. This is a retro device which looks like a keyboard with a screen that displays several lines of text. Many consider it one of the best tools for distraction-free writing. Neotools can manage files, install applets, and tweak applet settings. Neotools is written with Python and uses raw USB protocol for communication. It aims to be a simple, low-level and portable tool, which complements the platform-dependent desktop tools NEO Manager and AlphaSync.
+
+### [Nonius Clock](projects/clock.html)
+A whimsical clock face that uses a rotating ring with a vernier scale, aka nonius, to tell time.
