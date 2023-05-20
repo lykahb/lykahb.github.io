@@ -22,7 +22,7 @@
         <main role="main">
             <h1>Nonius Clock</h1>
             <script type="application/javascript" src="../js/petite-vue-0.4.1.js"></script>
-<script type="application/javascript" src="../js/clock.js"></script>
+<script type="application/javascript" src="../js/clock-v2.js"></script>
 <style>
 #clockAndControls {
     display: grid;
@@ -84,6 +84,11 @@
 
 #innerDial {
     stroke: black;
+}
+
+#rotatingDial {
+    transform-origin: center;
+    transition: transform 0.5s ease-in-out;
 }
 
 .hourMarker>line {
@@ -173,7 +178,7 @@ This clock face only needs one moving part to tell time - the rotating ring. Yet
 </g>
 </g>
 <circle :cx="centerCoordX" :cy="centerCoordY" :r="visuals.radiusOfRotatingDial" class="rotatingDialOuterCircle"></circle>
-<g id="rotatingDial" :transform="`rotate(${totalMinutes * params.angleDeltaOfRotatingDialPerMinute} ${centerCoordX} ${centerCoordY})`">
+<g id="rotatingDial" :transform="`rotate(${totalMinutes * params.angleDeltaOfRotatingDialPerMinute})`">
 <use v-for="i in Array.from({length: params.numberOfMarksForMinutesOnRotatingDial}, (x, i) =&gt; i)" href="#rotatingMinuteMarker" :transform="`rotate(${i * (360 / params.numberOfMarksForMinutesOnRotatingDial)} ${centerCoordX} ${centerCoordY})`" class="rotatingMinuteMarker">
 </use>
 <use v-for="i in Array.from({length: params.numberOfMarksForHoursOnRotatingDial}, (x, i) =&gt; i)" :href="i == 0 ? '#rotatingHourMarkerFirst' : '#rotatingHourMarker'" :transform="`rotate(${i * (360 / params.numberOfMarksForHoursOnRotatingDial)} ${centerCoordX} ${centerCoordY})`" :class="{'rotatingHourMarker': true, 'isFirstMarker': i == 0}">
@@ -189,12 +194,16 @@ This clock face only needs one moving part to tell time - the rotating ring. Yet
 </text>
 </g>
 </g>
+<text x="0" y="30" @click="setRandomTime()">{{timeString}}</text>
 </svg>
 <div id="controls">
 <h4 id="time">Time</h4>
 <label for="syncTime">Sync Time:</label><input name="syncTime" type="checkbox" v-model="options.syncTime" @change="updateClock()">
 <button class="fullRow" @click="options.syncTime=false;time.hours=0;time.minutes=0;time.seconds=0">
 Set to midnight
+</button>
+<button class="fullRow" @click="setRandomTime()">
+Random time
 </button>
 <label for="hours">Hours</label>
 <input id="hours" type="number" min="0" v-model="time.hours" @click="options.syncTime=false;">

@@ -108,6 +108,12 @@ function createClockApp() {
             this.time.minutes = date.getMinutes();
             this.time.seconds = date.getSeconds();
         },
+        setRandomTime() {
+            this.options.syncTime = false;
+            this.time.hours = Math.floor(Math.random() * 12);
+            this.time.minutes = Math.floor(Math.random() * 60);
+            this.time.seconds = Math.floor(Math.random() * 60)
+        },
         setParams(option) {
             if (option == "chaoticHours") {
                 this.params.numberOfMarksForHoursOnRotatingDial = 5;
@@ -141,6 +147,9 @@ function createClockApp() {
         },
         get totalMinutes() {
             return this.time.hours * 60 + this.time.minutes + this.time.seconds / 60;
+        },
+        get timeString() {
+            return `${this.time.hours}:${String(this.time.minutes).padStart(2, '0')}:${String(this.time.seconds).padStart(2, '0')}`
         },
         setupUpdate() {
             this.setParams("chaoticHours");
