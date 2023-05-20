@@ -115,6 +115,10 @@ title: Nonius Clock
     font-size: 8px;
     font-weight: bold;
 }
+
+.isMarkerMatching {
+    fill: red;
+}
 </style>
 
 <p>
@@ -126,7 +130,7 @@ title: Nonius Clock
     How do you read time? The dial has marks for minutes both on the rotating ring and on the fixed ring around it. A pair of marks aligns at the current minute. The marks for the hours are also indicated with alignment - although the fixed marks for hours are on the circle inside of the rotating ring. The marks are wide enough that the marks get disconnected after the minute or hour are over.
 </p>
 
-<p>This post continues below, but first let's see the clock in action. It looks much better on the Retina and other displays with high pixel density.</p>
+<p>This post continues below, but first let's see the clock in action. It looks much better on the Retina and other displays with high pixel density. Note that the markers that have alignment and display the current time are highlighted red to make it easier to learn how to read the clock. It is not necessary for the operation and can be turned off in the controls under the clock.</p>
 
 <div id="clockAndControls">
     <svg id="clock" viewBox="0 0 400 400" @vue:mounted="setupUpdate">
@@ -157,7 +161,7 @@ title: Nonius Clock
             <g v-for="i in Array.from({length: 60}, (x, i) => i)"
                 :class="{minuteMarker: true, dividesByFive: (i % 5 === 0)}"
                 :transform="`rotate(${i * params.angleStepForMinuteMarksOnOuterDial} ${centerCoordX} ${centerCoordY})`">
-                <use href="#fixedMinuteMarker" class="fixedMinuteMarker"></use>
+                <use href="#fixedMinuteMarker" :class="{'fixedMinuteMarker': true, 'isMarkerMatching': visuals.highlightMatchingMarkers && (time.minutes === i)}"></use>
             </g>
 
             <g v-for="i in Array.from({length: 60}, (x, i) => i)"
@@ -191,7 +195,7 @@ title: Nonius Clock
             <g v-for="i in Array.from({length: params.numberOfHours}, (x, i) => i)"
                 class="hourMarker"
                 :transform="`rotate(${i * params.angleStepForHourMarksOnInnerDial} ${centerCoordX} ${centerCoordY})`">
-                <use href="#fixedHourMarker" class="fixedHourMarker"></use>
+                <use href="#fixedHourMarker" :class="{'fixedHourMarker': true, 'isMarkerMatching': visuals.highlightMatchingMarkers && (time.hours % params.numberOfHours === i)}"></use>
                 <circle class="fixedHourMarkerCircle" :cx="centerCoordX"
                     :cy="centerCoordY - visuals.radiusOfInnerFixedDial + (visuals.radiusOfInnerFixedDial * (1 - 1 / visuals.phi)) / 2"></circle>
                 <text :x="centerCoordX" :y="centerCoordY - visuals.radiusOfInnerFixedDial + (visuals.radiusOfInnerFixedDial * (1 - 1 / visuals.phi)) / 2"
@@ -254,6 +258,9 @@ title: Nonius Clock
 
         <label for="minuteMarkerThicknessFactor">Thickness of minute marker.<br>At 1 there is no alignment after minute passes:</label>
         <input id="minuteMarkerThicknessFactor" type="number" min="0.1" max="10" step="0.1" v-model="visuals.minuteMarkerThicknessFactor"/>
+
+        <label for="highlightMatchingMarkers">Hightlight matching markers:</label>
+        <input id="highlightMatchingMarkers" type="checkbox" v-model="visuals.highlightMatchingMarkers"/>
         
         <label>Rotating ring makes a full rotation in N hours:</label>
         <input type="number" disabled :value="params.numberOfMarksForHoursOnRotatingDial * params.numberOfHours"/>

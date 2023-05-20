@@ -51,6 +51,7 @@ function createClockApp() {
             minuteLabelEvery: 5,
             minuteLabel59: false,
             minuteMarkerThicknessFactor: 1,
+            highlightMatchingMarkers: true,
             get fixedMinuteMarkerLength() {
                 return this.radiusOfOuterDial - this.radiusOfRotatingDial;
             },
