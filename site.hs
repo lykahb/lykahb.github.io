@@ -26,6 +26,10 @@ main = hakyllWith config $ do
         route   idRoute
         compile copyFileCompiler
 
+    match "CNAME" $ do
+        route   idRoute
+        compile copyFileCompiler
+
     match (fromList $ map (fromFilePath . (topLevel <>)) ["index.markdown", "projects.markdown"]) $ do
         route $ gsubRoute topLevel (const "") `composeRoutes` setExtension "html"
 
