@@ -1,6 +1,7 @@
----
-title: Home
----
++++
+title = "Home"
+template = "index.html"
++++
 
 <img class="profile-picture" src="/images/borys.png" />
 

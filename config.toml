@@ -1,0 +1,7 @@
+base_url = "https://lykahb.com"
+title = "Borys Lykah"
+default_language = "en"
+build_search_index = false
+output_dir = "docs"
+
+[extra]  # For any custom variables you want

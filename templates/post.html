@@ -1,9 +1,9 @@
-<article>
-    <section class="header">
-        Posted on $date$
-            by Borys Lykakh
-    </section>
-    <section>
-        $body$
-    </section>
-</article>
+{% extends "base.html" %}
+{% block title %}{{ page.title }}{% endblock %}
+{% block content %}
+  <article>
+    <h1>{{ page.title }}</h1>
+    <p><small>{{ page.date | date(format="%B %e, %Y") }}</small></p>
+    {{ page.content | safe }}
+  </article>
+{% endblock %}

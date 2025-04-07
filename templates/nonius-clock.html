@@ -1,7 +1,8 @@
----
-title: Nonius Clock
----
+{% extends "base.html" %}
 
+{% block title %}{{ page.title }}{% endblock %}
+
+{% block content %}
 <script type="application/javascript" src="/js/petite-vue-0.4.1.js"></script>
 <script type="application/javascript" src="/js/clock.js"></script>
 
@@ -137,6 +138,7 @@ title: Nonius Clock
 
 <p>This post continues below, but first let's see the clock in action. It looks much better on the Retina and other displays with high pixel density. Note that the markers that have alignment and display the current time are highlighted red to make it easier to learn how to read the clock. It is not necessary for the operation and can be turned off in the controls under the clock.</p>
 
+{% raw %}
 <div id="clockAndControls">
     <svg id="clock" viewBox="0 0 400 400" @vue:mounted="setupUpdate">
         <defs>
@@ -273,6 +275,7 @@ title: Nonius Clock
         <input type="number" disabled :value="params.numberOfMarksForHoursOnRotatingDial * params.numberOfHours"/>
     </div>
 </div>
+{% endraw %}
 
 <hr>
 
@@ -302,3 +305,4 @@ title: Nonius Clock
     const app = createClockApp();
     app.mount("#clockAndControls");
 </script>
+{% endblock %}
