@@ -1,23 +1,38 @@
 <!DOCTYPE html>
-<html>
+<html lang="{{ config.default_language | default(value="en") }}">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Borys Lykah is a software engineer focused on robust systems, functional programming, Haskell, and useful tools.">
   <title>{% block title %}{{ config.title }}{% endblock %}</title>
   <link rel="stylesheet" href="/css/default.css">
 </head>
 <body>
-  <header>
-      <div class="logo">
-          <a href="/">Borys Lykah</a>
-      </div>
-      <nav>
-          <a href="/">Home</a>
-          <a href="/projects">Projects</a>
+  <a class="skip-link" href="#content">Skip to content</a>
+  <header class="site-header">
+    <div class="site-shell site-header-inner">
+      <a class="brand" href="/" aria-label="Borys Lykah home">
+        <span class="brand-name">Borys Lykah</span>
+        <span class="brand-role">Software engineer</span>
+      </a>
+      <nav class="site-nav" aria-label="Primary navigation">
+        <a href="/">Home</a>
+        <a href="/projects">Projects</a>
       </nav>
+    </div>
   </header>
-  <main>
+  <main id="content" class="site-main site-shell">
     {% block content %}{% endblock %}
   </main>
+  <footer class="site-footer">
+    <div class="site-shell site-footer-inner">
+      <p>Calgary, Canada. Building robust systems and useful tools.</p>
+      <nav aria-label="Footer links">
+        <a href="mailto:lykahb@fastmail.com">Email</a>
+        <a target="_blank" rel="noreferrer" href="https://github.com/lykahb">GitHub</a>
+        <a target="_blank" rel="noreferrer" href="https://www.linkedin.com/in/lykahb/">LinkedIn</a>
+      </nav>
+    </div>
+  </footer>
 </body>
 </html>

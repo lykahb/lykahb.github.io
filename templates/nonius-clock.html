@@ -21,9 +21,9 @@
 }
 
 #controls {
-    font-size: 12px;
+    font-size: 14px;
     display: grid;
-    gap: 5px;
+    gap: 8px 12px;
     align-items: center;
     justify-items: start;
     grid-column: 1 / 3;
@@ -34,6 +34,8 @@
 #controls > h4 {
     grid-column: 1 / -1;
     grid-row: auto;
+    margin: 18px 0 4px;
+    font-size: 16px;
 }
 
 #controls > label, #controls > .labelForInputGroup {
@@ -51,6 +53,31 @@
 
 #controls > input, #controls > button {
     grid-column: 5 / span 8;
+}
+
+#controls > input[type='number'] {
+    width: 100%;
+    max-width: 160px;
+    min-height: 32px;
+    padding: 4px 8px;
+    border: 1px solid #dce4dd;
+    border-radius: 6px;
+    background: #fff;
+    color: #17201c;
+}
+
+#controls > button {
+    min-height: 34px;
+    padding: 6px 10px;
+    border: 1px solid #dce4dd;
+    border-radius: 6px;
+    background: #fff;
+    color: #15584d;
+    font-weight: 700;
+}
+
+#controls > button:hover {
+    border-color: #237869;
 }
 
 #controls > label.inputGroup {
@@ -126,6 +153,8 @@
     fill: red;
 }
 </style>
+
+<h1>Nonius Clock</h1>
 
 <p>
     A modern watch is less of a practical device and more a style choice. I'd like to present a novel quirky way to display time.
