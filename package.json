@@ -1,0 +1,11 @@
+{
+  "name": "lykahb.github.io",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "playwright": "playwright"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.61.0"
+  }
+}
