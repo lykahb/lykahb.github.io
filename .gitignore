@@ -3,3 +3,5 @@ _cache
 .idea/
 .vscode/
 node_modules/
+/docs/
+/public/
