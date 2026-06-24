@@ -102,6 +102,41 @@ function createClockApp() {
                 return this.date.getSeconds()
             }
         },
+        selectedTimeOption: "current",
+        paramPresets: {
+            chaoticHours: {
+                numberOfMarksForHoursOnRotatingDial: 5,
+                isRotatingClockwise: false,
+                areFixedHoursShorter: false,
+                areFixedMinutesShorter: true,
+                minuteLabelEvery: 5,
+                minuteLabel59: true
+            },
+            chaoticMinutes: {
+                numberOfMarksForHoursOnRotatingDial: 1,
+                isRotatingClockwise: true,
+                areFixedHoursShorter: false,
+                areFixedMinutesShorter: false,
+                minuteLabelEvery: 1,
+                minuteLabel59: false
+            },
+            chaoticHoursMinuteGap: {
+                numberOfMarksForHoursOnRotatingDial: 6,
+                isRotatingClockwise: true,
+                areFixedHoursShorter: true,
+                areFixedMinutesShorter: false,
+                minuteLabelEvery: 5,
+                minuteLabel59: true
+            },
+            oneWeekRotation: {
+                numberOfMarksForHoursOnRotatingDial: 14,
+                isRotatingClockwise: true,
+                areFixedHoursShorter: false,
+                areFixedMinutesShorter: false,
+                minuteLabelEvery: 5,
+                minuteLabel59: true
+            }
+        },
 
         get centerCoordX() {
             return this.visuals.viewPortSize / 2
@@ -122,6 +157,7 @@ function createClockApp() {
                 return;
             }
             const [hours, minutes, seconds = "0"] = value.split(":");
+            this.selectedTimeOption = null;
             this.setOffsetForTime(Number(hours) || 0, Number(minutes) || 0, Number(seconds) || 0);
         },
         // methods
@@ -177,46 +213,46 @@ function createClockApp() {
         useCurrentTime() {
             // Calling updateClock prevents a hiccup mid-animation
             this.updateClock();
+            this.selectedTimeOption = "current";
             this.time.offsetSeconds = 0;
         },
         setMidnight() {
             this.updateClock();
+            this.selectedTimeOption = "midnight";
             this.setOffsetForTime(0, 0, 0);
         },
         setRandomTime() {
             this.updateClock();
+            this.selectedTimeOption = "random";
             this.time.offsetSeconds = Math.floor(Math.random() * this.getSecondsInDay());
         },
         setParams(option) {
-            if (option == "chaoticHours") {
-                this.params.numberOfMarksForHoursOnRotatingDial = 5;
-                this.params.isRotatingClockwise = false;
-                this.params.areFixedHoursShorter = false;
-                this.params.areFixedMinutesShorter = true;
-                this.visuals.minuteLabelEvery = 5;
-                this.visuals.minuteLabel59 = true;
-            } else if (option == "chaoticMinutes") {
-                this.params.numberOfMarksForHoursOnRotatingDial = 1;
-                this.params.isRotatingClockwise = true;
-                this.params.areFixedHoursShorter = false;
-                this.params.areFixedMinutesShorter = false;
-                this.visuals.minuteLabelEvery = 1;
-                this.visuals.minuteLabel59 = false;
-            } else if (option == "chaoticHoursMinuteGap") {
-                this.params.numberOfMarksForHoursOnRotatingDial = 6;
-                this.params.isRotatingClockwise = true;
-                this.params.areFixedHoursShorter = true;
-                this.params.areFixedMinutesShorter = false;
-                this.visuals.minuteLabelEvery = 5;
-                this.visuals.minuteLabel59 = true;
-            } else if (option == "oneWeekRotation") {
-                this.params.numberOfMarksForHoursOnRotatingDial = 14;
-                this.params.isRotatingClockwise = true;
-                this.params.areFixedHoursShorter = false;
-                this.params.areFixedMinutesShorter = false;
-                this.visuals.minuteLabelEvery = 5;
-                this.visuals.minuteLabel59 = true;
+            const preset = this.paramPresets[option];
+            if (!preset) {
+                throw new Error(`Unknown parameter preset: ${option}`);
             }
+            this.params.numberOfMarksForHoursOnRotatingDial = preset.numberOfMarksForHoursOnRotatingDial;
+            this.params.isRotatingClockwise = preset.isRotatingClockwise;
+            this.params.areFixedHoursShorter = preset.areFixedHoursShorter;
+            this.params.areFixedMinutesShorter = preset.areFixedMinutesShorter;
+            this.visuals.minuteLabelEvery = preset.minuteLabelEvery;
+            this.visuals.minuteLabel59 = preset.minuteLabel59;
+        },
+        get selectedParamPreset() {
+            return Object.keys(this.paramPresets).find(option => this.paramPresetMatches(option)) || null;
+        },
+        isSelectedParamPreset(option) {
+            return this.selectedParamPreset === option;
+        },
+        paramPresetMatches(option) {
+            const preset = this.paramPresets[option];
+            return !!preset
+                && this.params.numberOfMarksForHoursOnRotatingDial === preset.numberOfMarksForHoursOnRotatingDial
+                && this.params.isRotatingClockwise === preset.isRotatingClockwise
+                && this.params.areFixedHoursShorter === preset.areFixedHoursShorter
+                && this.params.areFixedMinutesShorter === preset.areFixedMinutesShorter
+                && this.visuals.minuteLabelEvery === preset.minuteLabelEvery
+                && this.visuals.minuteLabel59 === preset.minuteLabel59;
         },
         get totalMinutes() {
             return this.time.hours * 60 + this.time.minutes + this.time.seconds / 60;
