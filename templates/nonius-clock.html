@@ -55,39 +55,51 @@
 	    gap: 0.7rem;
 	}
 	
+	.time-row {
+	    grid-template-columns: 1fr;
+	    gap: 0.7rem;
+	}
+	
 	.control-row > label,
 	.control-row > .labelForInputGroup {
 	    color: #34433b;
 	    line-height: 1.3;
 	}
 	
-	.button-grid,
-	.choice-grid {
-	    display: grid;
-	    gap: 0.8rem;
-	}
-	
-	.choice-grid {
-	    grid-template-columns: repeat(2, minmax(0, 1fr));
-	}
-	
-	#controls input[type='number'] {
-	    width: 100%;
-	    min-height: 3.8rem;
-	    padding: 0.7rem 0.9rem;
-	    border: 1px solid #dce4dd;
-	    border-radius: 6px;
-	    background: #fff;
-	    color: #17201c;
-	    font: inherit;
-	}
-	
-	#controls input[type='number']:focus,
-	.choice:focus-within {
-	    outline: 2px solid rgba(35, 120, 105, 0.22);
-	    outline-offset: 2px;
-	    border-color: #237869;
-	}
+		.time-actions,
+		.button-grid,
+		.choice-grid {
+		    display: grid;
+		    gap: 0.8rem;
+		}
+		
+		.time-actions {
+		    grid-template-columns: repeat(3, minmax(0, 1fr));
+		}
+		
+		.choice-grid {
+		    grid-template-columns: repeat(2, minmax(0, 1fr));
+		}
+		
+		#controls input[type='number'],
+		#controls input[type='time'] {
+		    width: 100%;
+		    min-height: 3.8rem;
+		    padding: 0.7rem 0.9rem;
+		    border: 1px solid #dce4dd;
+		    border-radius: 6px;
+		    background: #fff;
+		    color: #17201c;
+		    font: inherit;
+		}
+		
+		#controls input[type='number']:focus,
+		#controls input[type='time']:focus,
+		.choice:focus-within {
+		    outline: 2px solid rgba(35, 120, 105, 0.22);
+		    outline-offset: 2px;
+		    border-color: #237869;
+		}
 	
 	#controls input[type='checkbox'],
 	#controls input[type='radio'] {
@@ -152,71 +164,92 @@
 	        grid-template-columns: 1fr;
 	    }
 	
+	    .time-actions,
 	    .choice-grid {
 	        grid-template-columns: 1fr;
 	    }
 	}
 	
-	#innerDial {
-    stroke: black;
-}
+	#clock {
+	    --clock-paper: #fdf6e3;
+	    --clock-ink: #073642;
+	    --clock-marker: #93a1a1;
+	    --clock-marker-strong: #657b83;
+	    --clock-highlight: #dc322f;
+	    background: #fff;
+	}
+	
+	#clock text {
+	    fill: var(--clock-ink);
+	    font-family: ui-rounded, "Avenir Next", "Gill Sans", "Gill Sans MT", Calibri, sans-serif;
+	    font-weight: 800;
+	    paint-order: stroke;
+	    stroke: var(--clock-paper);
+	    stroke-linejoin: round;
+	    stroke-width: 0.8px;
+	}
+	
+		#innerDial {
+	    stroke: var(--clock-ink);
+	}
 
-#rotatingDial {
-    transform-origin: center;
-    transition: transform 0.5s ease-in-out;
-}
+    #rotatingDial {
+        transform-origin: center;
+        transition: transform 0.5s ease-in-out;
+    }
 
-.hourMarker>line {
-    stroke: black;
-}
-
-.rotatingMinuteMarker, .fixedMinuteMarker {
-    fill: black;
-    stroke: none;
-}
-
-.rotatingHourMarker, .fixedHourMarker {
-    fill: white;
-    stroke: black;
-    stroke-width: 2px;
-}
-
-.fixedHourMarkerCircle {
-    r: 7px;
-    stroke: black;
-    fill: white;
-}
-
-.fixedMinuteMarkerCircle {
-    r: 10px;
-    stroke: black;
-    fill: white;
-}
-
-.rotatingDialInnerCircle, .rotatingDialOuterCircle {
-    fill: none;
-    stroke: black;
-    stroke-width: 0.1px;
-}
-
-.outerDialCircle {
-    fill: white;
-    stroke: black;
-    stroke-width: 1px;
-}
-
-.minuteMarker {
-    font-size: 12px;
-}
-
-.hourMarker {
-    font-size: 8px;
-    font-weight: bold;
-}
-
-.isMarkerMatching {
-    fill: red;
-}
+	.hourMarker>line {
+	    stroke: var(--clock-ink);
+	}
+	
+	.rotatingMinuteMarker, .fixedMinuteMarker {
+	    fill: var(--clock-marker);
+	    stroke: none;
+	}
+	
+	.rotatingHourMarker, .fixedHourMarker {
+	    fill: var(--clock-marker-strong);
+	    stroke: none;
+	}
+	
+	.fixedHourMarkerCircle {
+	    r: 8px;
+	    stroke: var(--clock-ink);
+	    fill: var(--clock-paper);
+	    stroke-width: 2.4px;
+	}
+	
+	.fixedMinuteMarkerCircle {
+	    r: 13px;
+	    stroke: var(--clock-ink);
+	    fill: var(--clock-paper);
+	    stroke-width: 2.4px;
+	}
+	
+	.rotatingDialInnerCircle, .rotatingDialOuterCircle {
+	    fill: none;
+	    stroke: var(--clock-marker);
+	    stroke-width: 1.4px;
+	}
+	
+	.outerDialCircle {
+	    fill: var(--clock-paper);
+	    stroke: var(--clock-ink);
+	    stroke-width: 2px;
+	}
+	
+	.minuteMarker {
+	    font-size: 17px;
+	}
+	
+	.hourMarker {
+	    font-size: 10px;
+	    font-weight: 800;
+	}
+	
+	.isMarkerMatching {
+	    fill: var(--clock-highlight);
+	}
 </style>
 
 <h1>Nonius Clock</h1>
@@ -306,30 +339,17 @@
                 </text>
             </g>
         </g>
-        <text x="0" y="30" @click="setRandomTime()">{{timeString}}</text>
     </svg>
 	    <div id="controls">
 	        <section class="control-section">
 	            <h4>Time</h4>
-	            <div class="control-row">
-	                <label for="syncTime">Sync Time:</label>
-	                <input id="syncTime" name="syncTime" class="checkbox-control" type="checkbox" v-model="options.syncTime" @change="updateClock()">
+	            <div class="control-row time-row">
+	                <input id="timeInput" type="time" step="1" v-model="timeInputValue" aria-label="Time">
 	            </div>
-	            <div class="button-grid">
-	                <button @click="options.syncTime=false;time.hours=0;time.minutes=0;time.seconds=0">Set to midnight</button>
-	                <button @click="setRandomTime()">Random time</button>
-	            </div>
-	            <div class="control-row">
-	                <label for="hours">Hours</label>
-	                <input id="hours" type="number" min="0" v-model="time.hours" @click="options.syncTime=false;">
-	            </div>
-	            <div class="control-row">
-	                <label for="minutes">Minutes</label>
-	                <input id="minutes" type="number" min="0" max="59" v-model="time.minutes" @click="options.syncTime=false;">
-	            </div>
-	            <div class="control-row">
-	                <label for="seconds">Seconds</label>
-	                <input id="seconds" type="number" min="0" max="59" v-model="time.seconds" @click="options.syncTime=false;">
+	            <div class="time-actions">
+	                <button @click="useCurrentTime()">Current</button>
+	                <button @click="setMidnight()">Midnight</button>
+	                <button @click="setRandomTime()">Random</button>
 	            </div>
 	        </section>
 	

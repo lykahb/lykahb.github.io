@@ -1,8 +1,5 @@
 function createClockApp() {
     return PetiteVue.createApp({
-        options: {
-            syncTime: true,
-        },
         params: {
             get numberOfMarksForMinutesOnRotatingDial() {
                 return this.numberOfMarksForHoursOnRotatingDial * this.numberOfHours;
@@ -50,7 +47,7 @@ function createClockApp() {
             radiusOfOuterDial: 180,
             minuteLabelEvery: 5,
             minuteLabel59: false,
-            minuteMarkerThicknessFactor: 1,
+            minuteMarkerThicknessFactor: 10,
             highlightMatchingMarkers: true,
             get fixedMinuteMarkerLength() {
                 return this.radiusOfOuterDial - this.radiusOfRotatingDial;
@@ -72,10 +69,19 @@ function createClockApp() {
 
         // Time
         time: {
-            hours: 0,
-            minutes: 0,
-            seconds: 0,
+            date: new Date(),
+            get hours() {
+                return this.date.getHours()
+            },
+            get minutes() {
+                return this.date.getMinutes()
+            },
+            get seconds() {
+                return this.date.getSeconds()
+            }
         },
+        // Positive, between 0 and equivalent of 24h
+        timeOffsetSeconds: 0,
 
         get centerCoordX() {
             return this.visuals.viewPortSize / 2
@@ -83,7 +89,40 @@ function createClockApp() {
         get centerCoordY() {
             return this.visuals.viewPortSize / 2
         },
+        formatTime(time) {
+            const date = new Date();
+            date.setHours(time.hours, time.minutes, time.seconds, 0);
+            return date.toTimeString().slice(0, 8);
+        },
+        get timeInputValue() {
+            return this.formatTime(this.time);
+        },
+        set timeInputValue(value) {
+            if (!value) {
+                return;
+            }
+            const [hours, minutes, seconds = "0"] = value.split(":");
+            this.setOffsetForTime(Number(hours) || 0, Number(minutes) || 0, Number(seconds) || 0);
+        },
         // methods
+        getSecondsInDay() {
+            return 24 * 60 * 60;
+        },
+        secondsWithinHMS(hours, minutes, seconds) {
+            return hours * 60 * 60 + minutes * 60 + seconds;
+        },
+        setOffsetForTime(hours, minutes, seconds) {
+            const targetSeconds = this.secondsWithinHMS(hours, minutes, seconds);
+            const date = new Date();
+            const currentTimeSeconds = this.secondsWithinHMS(date.getHours(), date.getMinutes(), date.getSeconds());
+            if (targetSeconds >= currentTimeSeconds) {
+                this.timeOffsetSeconds = targetSeconds - currentTimeSeconds;
+            } else {
+                this.timeOffsetSeconds = targetSeconds - currentTimeSeconds + this.getSecondsInDay();
+            }
+
+            this.updateClock();
+        },
         markerPath(innerRadius, outerRadius, angularSizeDegrees, closePath) {
             // Marker is shaped like a trapeze. Drawing starts from the inner side of the rotating dial.
             // The angular size is how much the dial rotates within one minute or hour. Then take a half of it for easier calculation of offsets.
@@ -100,19 +139,20 @@ function createClockApp() {
                 ${closePath ? 'z' : ''}`;
         },
         updateClock() {
-            if (!this.options.syncTime) {
-                return;
-            }
             const date = new Date();
-            this.time.hours = date.getHours() % this.params.numberOfHours;
-            this.time.minutes = date.getMinutes();
-            this.time.seconds = date.getSeconds();
+            date.setSeconds(date.getSeconds() + this.timeOffsetSeconds);
+            this.time.date = date;
+        },
+        useCurrentTime() {
+            this.timeOffsetSeconds = 0;
+            this.updateClock();
+        },
+        setMidnight() {
+            this.setOffsetForTime(0, 0, 0);
         },
         setRandomTime() {
-            this.options.syncTime = false;
-            this.time.hours = Math.floor(Math.random() * 12);
-            this.time.minutes = Math.floor(Math.random() * 60);
-            this.time.seconds = Math.floor(Math.random() * 60)
+            this.timeOffsetSeconds = Math.floor(Math.random() * this.getSecondsInDay());
+            this.updateClock();
         },
         setParams(option) {
             if (option == "chaoticHours") {
@@ -148,13 +188,10 @@ function createClockApp() {
         get totalMinutes() {
             return this.time.hours * 60 + this.time.minutes + this.time.seconds / 60;
         },
-        get timeString() {
-            return `${this.time.hours}:${String(this.time.minutes).padStart(2, '0')}:${String(this.time.seconds).padStart(2, '0')}`
-        },
         setupUpdate() {
             this.setParams("chaoticHours");
             this.updateClock();
-            setInterval(this.updateClock, 1000);
+            setInterval(() => this.updateClock(), 1000);
         }
     });
 }
