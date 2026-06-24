@@ -109,6 +109,21 @@
 		    color: #17201c;
 		    font: inherit;
 		}
+
+		#controls input:disabled {
+		    border-color: #c9d2cc;
+		    background:
+		        repeating-linear-gradient(
+		            -45deg,
+		            #eef3ee 0,
+		            #eef3ee 6px,
+		            #e4ebe5 6px,
+		            #e4ebe5 12px
+		        );
+		    color: #65706a;
+		    cursor: not-allowed;
+		    opacity: 1;
+		}
 		
 		#controls input[type='number']:focus,
 		#controls input[type='time']:focus,
@@ -398,7 +413,7 @@
 	        <section class="control-section">
 	            <h4>Parameter Presets</h4>
 	            <div class="button-grid">
-	                <button @click="setParams('chaoticHours')">Chaotic hours, ordered minutes,  (default)</button>
+	                <button @click="setParams('chaoticHours')">Chaotic hours, ordered minutes (default)</button>
 	                <button @click="setParams('chaoticMinutes')">Ordered hours, chaotic minutes</button>
 	                <button @click="setParams('chaoticHoursMinuteGap')">Chaotic hours, ordered minutes with a gap on 10-12</button>
 	                <button @click="setParams('oneWeekRotation')">The ring fully rotates in one week</button>
@@ -410,73 +425,73 @@
 	            <div class="control-subsection">
 	                <h5>General</h5>
 	                <div class="control-row">
-	                    <label for="numberOfMarksForHoursOnRotatingDial">Number of marks for hours on rotating dial:</label>
+	                    <label for="numberOfMarksForHoursOnRotatingDial">Rotating hour marks:</label>
 	                    <input id="numberOfMarksForHoursOnRotatingDial" type="number" min="1" max="60" v-model="params.numberOfMarksForHoursOnRotatingDial">
 	                </div>
 	                <div class="control-row">
-	                    <label for="numberOfMarksForMinutesOnRotatingDial">Number of marks for minutes on rotating dial:</label>
+	                    <label for="numberOfMarksForMinutesOnRotatingDial">Rotating minute marks:</label>
 	                    <input id="numberOfMarksForMinutesOnRotatingDial" type="number" disabled="true" v-model="params.numberOfMarksForMinutesOnRotatingDial">
 	                </div>
 	                <div class="control-row choice-row">
-	                    <span class="labelForInputGroup">Middle ring rotates:</span>
+	                    <span class="labelForInputGroup">Direction:</span>
 	                    <div class="choice-grid">
 	                        <label class="choice"><input type="radio" v-model="params.isRotatingClockwise" :value="true" />clockwise</label>
 	                        <label class="choice"><input type="radio" v-model="params.isRotatingClockwise" :value="false" />counter-clockwise</label>
 	                    </div>
 	                </div>
 	                <div class="control-row choice-row">
-	                    <span class="labelForInputGroup">Number of hours on the dial:</span>
+	                    <span class="labelForInputGroup">Hours on dial:</span>
 	                    <div class="choice-grid">
 	                        <label class="choice"><input type="radio" v-model="params.numberOfHours" :value="12" />12</label>
 	                        <label class="choice"><input type="radio" v-model="params.numberOfHours" :value="24" />24</label>
 	                    </div>
 	                </div>
 	                <div class="control-row">
-	                    <label for="highlightMatchingMarkers">Hightlight matching markers:</label>
+	                    <label for="highlightMatchingMarkers">Highlight matches:</label>
 	                    <input id="highlightMatchingMarkers" class="checkbox-control" type="checkbox" v-model="visuals.highlightMatchingMarkers"/>
 	                </div>
 	                <div class="control-row">
-	                    <label>Rotating ring makes a full rotation in N hours:</label>
+	                    <label>Rotation period:</label>
 	                    <input type="number" disabled :value="params.numberOfMarksForHoursOnRotatingDial * params.numberOfHours"/>
 	                </div>
 	            </div>
 	            <div class="control-subsection">
 	                <h5>Hour</h5>
 	                <div class="control-row choice-row">
-	                    <span class="labelForInputGroup">Distance between hour markers:</span>
+		                    <span class="labelForInputGroup">Spacing:</span>
 	                    <div class="choice-grid">
 	                        <label class="choice"><input type="radio" v-model="params.areFixedHoursShorter" :value="true" />shorter</label>
 	                        <label class="choice"><input type="radio" v-model="params.areFixedHoursShorter" :value="false" />longer</label>
 	                    </div>
 	                </div>
 	                <div class="control-row">
-	                    <label for="numberOfAngleStepsForFixedHourMarks">Angle steps between fixed hour markers:</label>
+		                    <label for="numberOfAngleStepsForFixedHourMarks">Angle steps:</label>
 	                    <input id="numberOfAngleStepsForFixedHourMarks" type="number" min="1" step="1" v-model="params.numberOfAngleStepsForFixedHourMarks">
 	                </div>
 	            </div>
 	            <div class="control-subsection">
 	                <h5>Minute</h5>
 	                <div class="control-row choice-row">
-	                    <span class="labelForInputGroup">Distance between minute markers:</span>
+		                    <span class="labelForInputGroup">Spacing:</span>
 	                    <div class="choice-grid">
 	                        <label class="choice"><input type="radio" v-model="params.areFixedMinutesShorter" :value="true" />shorter</label>
 	                        <label class="choice"><input type="radio" v-model="params.areFixedMinutesShorter" :value="false" />longer</label>
 	                    </div>
 	                </div>
 	                <div class="control-row">
-	                    <label for="numberOfAngleStepsForFixedMinuteMarks">Angle steps between fixed minute markers:</label>
+		                    <label for="numberOfAngleStepsForFixedMinuteMarks">Angle steps:</label>
 	                    <input id="numberOfAngleStepsForFixedMinuteMarks" type="number" min="1" step="1" v-model="params.numberOfAngleStepsForFixedMinuteMarks">
 	                </div>
 	                <div class="control-row">
-	                    <label for="minuteLabelEvery">Display minute labels every N minutes:</label>
+		                    <label for="minuteLabelEvery">Labels every:</label>
 	                    <input id="minuteLabelEvery" type="number" min="1" max="60" v-model="visuals.minuteLabelEvery"/>
 	                </div>
 	                <div class="control-row">
-	                    <label for="minuteLabel59">Display label for minute 59:</label>
+		                    <label for="minuteLabel59">Show 59:</label>
 	                    <input id="minuteLabel59" class="checkbox-control" type="checkbox" v-model="visuals.minuteLabel59"/>
 	                </div>
 	                <div class="control-row">
-	                    <label for="minuteMarkerThicknessFactor">Thickness of minute marker.<br>At 1 there is no alignment after minute passes:</label>
+		                    <label for="minuteMarkerThicknessFactor">Marker thickness:</label>
 	                    <input id="minuteMarkerThicknessFactor" type="number" min="0.1" max="10" step="0.1" v-model="visuals.minuteMarkerThicknessFactor"/>
 	                </div>
 	            </div>
