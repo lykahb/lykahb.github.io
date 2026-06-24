@@ -11,7 +11,7 @@ function createClockApp() {
             isGMT: false,
             numberOfHours: 12,
             // signed angle. If negative, the marks extend counter-clockwise from the top.
-            get angleStepForHourMarksOnInnerDial () {
+            get angleStepForFixedHourMarks () {
                 // Each hour the next minute mark aligns.
                 const hourVernierConstant = 360 / this.numberOfMarksForMinutesOnRotatingDial;
                 const hourAngleOnRotatingDial = 360 / this.numberOfMarksForHoursOnRotatingDial;
@@ -22,7 +22,7 @@ function createClockApp() {
                     return this.areFixedHoursShorter ? angle : -angle;
                 }
             },
-            get angleStepForMinuteMarksOnOuterDial() {
+            get angleStepForFixedMinuteMarks() {
                 const hourVernierConstant = 360 / this.numberOfMarksForMinutesOnRotatingDial;
                 const minuteVernierConstant = hourVernierConstant / 60;
                 const minuteAngleOnRotatingDial = hourVernierConstant;
