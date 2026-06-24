@@ -10,12 +10,21 @@ function createClockApp() {
             areFixedHoursShorter: true,
             isGMT: false,
             numberOfHours: 12,
+            numberOfAngleStepsForFixedHourMarks: 1,
+            numberOfAngleStepsForFixedMinuteMarks: 1,
+            validateAngleStepCount(value, paramName) {
+                if (!Number.isInteger(value) || value < 1) {
+                    throw new Error(`${paramName} must be an integer greater than or equal to 1`);
+                }
+                return value;
+            },
             // signed angle. If negative, the marks extend counter-clockwise from the top.
             get angleStepForFixedHourMarks () {
                 // Each hour the next minute mark aligns.
+                const angleStepCount = this.validateAngleStepCount(this.numberOfAngleStepsForFixedHourMarks, "numberOfAngleStepsForFixedHourMarks");
                 const hourVernierConstant = 360 / this.numberOfMarksForMinutesOnRotatingDial;
                 const hourAngleOnRotatingDial = 360 / this.numberOfMarksForHoursOnRotatingDial;
-                const angle = hourAngleOnRotatingDial + (this.areFixedHoursShorter ? -hourVernierConstant : hourVernierConstant);
+                const angle = angleStepCount * hourAngleOnRotatingDial + (this.areFixedHoursShorter ? -hourVernierConstant : hourVernierConstant);
                 if (this.isRotatingClockwise) {
                     return this.areFixedHoursShorter ? -angle : angle;
                 } else {
@@ -23,10 +32,11 @@ function createClockApp() {
                 }
             },
             get angleStepForFixedMinuteMarks() {
+                const angleStepCount = this.validateAngleStepCount(this.numberOfAngleStepsForFixedMinuteMarks, "numberOfAngleStepsForFixedMinuteMarks");
                 const hourVernierConstant = 360 / this.numberOfMarksForMinutesOnRotatingDial;
                 const minuteVernierConstant = hourVernierConstant / 60;
                 const minuteAngleOnRotatingDial = hourVernierConstant;
-                const angle = minuteAngleOnRotatingDial + (this.areFixedMinutesShorter ? -minuteVernierConstant : minuteVernierConstant);
+                const angle = angleStepCount * minuteAngleOnRotatingDial + (this.areFixedMinutesShorter ? -minuteVernierConstant : minuteVernierConstant);
                 if (this.isRotatingClockwise) {
                     return this.areFixedMinutesShorter ? -angle : angle;
                 } else {
