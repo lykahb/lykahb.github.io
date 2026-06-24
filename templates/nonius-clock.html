@@ -6,93 +6,158 @@
 <script type="application/javascript" src="/js/petite-vue-0.4.1.js"></script>
 <script type="application/javascript" src="/projects/nonius-clock/js/nonius-clock.js"></script>
 
-<style>
-#clockAndControls {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 10px;
-    grid-auto-rows: minmax(100px, auto);
-}
-
-#clock {
-    font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
-    grid-column: 1 / 3;
-    grid-row: 1;
-}
-
-#controls {
-    font-size: 14px;
-    display: grid;
-    gap: 8px 12px;
-    align-items: center;
-    justify-items: start;
-    grid-column: 1 / 3;
-    grid-auto-rows: auto;
-    grid-template-columns: repeat(12, 1fr);
-}
-
-#controls > h4 {
-    grid-column: 1 / -1;
-    grid-row: auto;
-    margin: 18px 0 4px;
-    font-size: 16px;
-}
-
-#controls > label, #controls > .labelForInputGroup {
-    grid-column: 1 / span 4;
-}
-
-#controls > .labelForInputGroup {
-    /* This is a hack - it relies on the fact that all input groups only have two rows */
-    grid-row: span 2;
-}
-
-#controls > .fullRow {
-    grid-column: 1 / -1;
-}
-
-#controls > input, #controls > button {
-    grid-column: 5 / span 8;
-}
-
-#controls > input[type='number'] {
-    width: 100%;
-    max-width: 160px;
-    min-height: 32px;
-    padding: 4px 8px;
-    border: 1px solid #dce4dd;
-    border-radius: 6px;
-    background: #fff;
-    color: #17201c;
-}
-
-#controls > button {
-    min-height: 34px;
-    padding: 6px 10px;
-    border: 1px solid #dce4dd;
-    border-radius: 6px;
-    background: #fff;
-    color: #15584d;
-    font-weight: 700;
-}
-
-#controls > button:hover {
-    border-color: #237869;
-}
-
-#controls > label.inputGroup {
-    grid-column: 5 / span 2;
-}
-
-#controls > label.inputGroup:has(input) {
-    grid-column: 5 / -1;
-}
-
-#controls > label > input[type='radio'] {
-    margin-right: 1rem;
-}
-
-#innerDial {
+	<style>
+	#clockAndControls {
+	    display: grid;
+	    grid-template-columns: minmax(32rem, 1fr) minmax(32rem, 42rem);
+	    gap: 1.6rem;
+	    align-items: start;
+	}
+	
+	#clock {
+	    font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+	    width: 100%;
+	    height: auto;
+	    aspect-ratio: 1;
+	}
+	
+	#controls {
+	    display: grid;
+	    gap: 1.2rem;
+	    align-self: start;
+	    font-size: 1.4rem;
+	}
+	
+	.control-section {
+	    display: grid;
+	    gap: 1rem;
+	    padding: 1.4rem;
+	    border: 1px solid rgba(220, 228, 221, 0.9);
+	    border-radius: 8px;
+	    background: rgba(255, 255, 255, 0.62);
+	}
+	
+	.control-section h4 {
+	    margin: 0 0 0.2rem;
+	    font-size: 1.5rem;
+	    line-height: 1.2;
+	}
+	
+	.control-row {
+	    display: grid;
+	    grid-template-columns: minmax(0, 1fr) minmax(9rem, 13rem);
+	    gap: 1rem;
+	    align-items: center;
+	}
+	
+	.choice-row {
+	    grid-template-columns: 1fr;
+	    gap: 0.7rem;
+	}
+	
+	.control-row > label,
+	.control-row > .labelForInputGroup {
+	    color: #34433b;
+	    line-height: 1.3;
+	}
+	
+	.button-grid,
+	.choice-grid {
+	    display: grid;
+	    gap: 0.8rem;
+	}
+	
+	.choice-grid {
+	    grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+	
+	#controls input[type='number'] {
+	    width: 100%;
+	    min-height: 3.8rem;
+	    padding: 0.7rem 0.9rem;
+	    border: 1px solid #dce4dd;
+	    border-radius: 6px;
+	    background: #fff;
+	    color: #17201c;
+	    font: inherit;
+	}
+	
+	#controls input[type='number']:focus,
+	.choice:focus-within {
+	    outline: 2px solid rgba(35, 120, 105, 0.22);
+	    outline-offset: 2px;
+	    border-color: #237869;
+	}
+	
+	#controls input[type='checkbox'],
+	#controls input[type='radio'] {
+	    accent-color: #237869;
+	}
+	
+	#controls button {
+	    min-height: 3.8rem;
+	    padding: 0.8rem 1rem;
+	    border: 1px solid #dce4dd;
+	    border-radius: 6px;
+	    background: #fff;
+	    color: #15584d;
+	    font: inherit;
+	    font-weight: 760;
+	    line-height: 1.15;
+	    text-align: left;
+	    transition:
+	        border-color 180ms ease,
+	        background-color 180ms ease,
+	        color 180ms ease,
+	        transform 180ms ease;
+	}
+	
+	#controls button:hover {
+	    border-color: #237869;
+	    background: #eef3ee;
+	    transform: translateY(-1px);
+	}
+	
+	.choice {
+	    display: flex;
+	    align-items: center;
+	    gap: 0.8rem;
+	    min-height: 3.8rem;
+	    padding: 0.7rem 0.9rem;
+	    border: 1px solid #dce4dd;
+	    border-radius: 6px;
+	    background: #fff;
+	    line-height: 1.15;
+	}
+	
+	.choice input {
+	    flex: 0 0 auto;
+	    margin: 0;
+	}
+	
+	.checkbox-control {
+	    justify-self: start;
+	    width: 2rem;
+	    height: 2rem;
+	}
+	
+	@media (max-width: 920px) {
+	    #clockAndControls {
+	        grid-template-columns: 1fr;
+	    }
+	}
+	
+	@media (max-width: 520px) {
+	    .control-row {
+	        grid-template-columns: 1fr;
+	    }
+	
+	    .choice-grid {
+	        grid-template-columns: 1fr;
+	    }
+	}
+	
+	#innerDial {
     stroke: black;
 }
 
@@ -243,67 +308,102 @@
         </g>
         <text x="0" y="30" @click="setRandomTime()">{{timeString}}</text>
     </svg>
-    <div id="controls">
-        <h4>Time</h4>
-        <label for="syncTime">Sync Time:</label><input name="syncTime" type="checkbox" v-model="options.syncTime" @change="updateClock()">
-        <button class="fullRow" @click="options.syncTime=false;time.hours=0;time.minutes=0;time.seconds=0">Set to midnight</button>
-        <button class="fullRow" @click="setRandomTime()">Random time</button>
-        
-        <label for="hours">Hours</label>
-        <input id="hours" type="number" min="0" v-model="time.hours" @click="options.syncTime=false;">
-        
-        <label for="minutes">Minutes</label>
-        <input id="minutes" type="number" min="0" max="59" v-model="time.minutes" @click="options.syncTime=false;">
-        
-        <label for="seconds">Seconds</label>
-        <input id="seconds" type="number" min="0" max="59" v-model="time.seconds" @click="options.syncTime=false;">
-        
-        <h4>Parameter Presets</h4>
-
-        <button class="fullRow" @click="setParams('chaoticHours')">Chaotic hours, ordered minutes,  (default)</button>
-        <button class="fullRow" @click="setParams('chaoticMinutes')">Ordered hours, chaotic minutes</button>
-        <button class="fullRow" @click="setParams('chaoticHoursMinuteGap')">Chaotic hours, ordered minutes with a gap on 10-12</button>
-        <button class="fullRow" @click="setParams('oneWeekRotation')">The ring fully rotates in one week</button>
-
-        <h4>Parameters</h4>
-        <label for="numberOfMarksForHoursOnRotatingDial">Number of marks for hours on rotating dial:</label>
-        <input id="numberOfMarksForHoursOnRotatingDial" type="number" min="1" max="60" v-model="params.numberOfMarksForHoursOnRotatingDial">
-
-        <label for="numberOfMarksForMinutesOnRotatingDial">Number of marks for minutes on rotating dial:</label>
-        <input id="numberOfMarksForMinutesOnRotatingDial" type="number" disabled="true" v-model="params.numberOfMarksForMinutesOnRotatingDial">
-
-        <span class="labelForInputGroup">Middle ring rotates:</span>
-        <label class="inputGroup"><input type="radio" v-model="params.isRotatingClockwise" :value="true" />clockwise</label>
-        <label class="inputGroup"><input type="radio" v-model="params.isRotatingClockwise" :value="false" />counter-clockwise</label>
-
-        <span class="labelForInputGroup">Distance between hour markers:</span>
-        <label class="inputGroup"><input type="radio" v-model="params.areFixedHoursShorter" :value="true" />shorter</label>
-        <label class="inputGroup"><input type="radio" v-model="params.areFixedHoursShorter" :value="false" />longer</label>
-
-        <span class="labelForInputGroup">Distance between minute markers:</span>
-        <label class="inputGroup"><input type="radio" v-model="params.areFixedMinutesShorter" :value="true" />shorter</label>
-        <label class="inputGroup"><input type="radio" v-model="params.areFixedMinutesShorter" :value="false" />longer</label>
-        
-        <span class="labelForInputGroup">Number of hours on the dial:</span>
-        <label class="inputGroup"><input type="radio" v-model="params.numberOfHours" :value="12" />12</label>
-        <label class="inputGroup"><input type="radio" v-model="params.numberOfHours" :value="24" />24</label>
-
-        <label for="minuteLabelEvery">Display minute labels every N minutes:</label>
-        <input id="minuteLabelEvery" type="number" min="1" max="60" v-model="visuals.minuteLabelEvery"/> 
-
-        <label for="minuteLabel59">Display label for minute 59:</label>
-        <input id="minuteLabel59" type="checkbox" v-model="visuals.minuteLabel59"/>
-
-        <label for="minuteMarkerThicknessFactor">Thickness of minute marker.<br>At 1 there is no alignment after minute passes:</label>
-        <input id="minuteMarkerThicknessFactor" type="number" min="0.1" max="10" step="0.1" v-model="visuals.minuteMarkerThicknessFactor"/>
-
-        <label for="highlightMatchingMarkers">Hightlight matching markers:</label>
-        <input id="highlightMatchingMarkers" type="checkbox" v-model="visuals.highlightMatchingMarkers"/>
-        
-        <label>Rotating ring makes a full rotation in N hours:</label>
-        <input type="number" disabled :value="params.numberOfMarksForHoursOnRotatingDial * params.numberOfHours"/>
-    </div>
-</div>
+	    <div id="controls">
+	        <section class="control-section">
+	            <h4>Time</h4>
+	            <div class="control-row">
+	                <label for="syncTime">Sync Time:</label>
+	                <input id="syncTime" name="syncTime" class="checkbox-control" type="checkbox" v-model="options.syncTime" @change="updateClock()">
+	            </div>
+	            <div class="button-grid">
+	                <button @click="options.syncTime=false;time.hours=0;time.minutes=0;time.seconds=0">Set to midnight</button>
+	                <button @click="setRandomTime()">Random time</button>
+	            </div>
+	            <div class="control-row">
+	                <label for="hours">Hours</label>
+	                <input id="hours" type="number" min="0" v-model="time.hours" @click="options.syncTime=false;">
+	            </div>
+	            <div class="control-row">
+	                <label for="minutes">Minutes</label>
+	                <input id="minutes" type="number" min="0" max="59" v-model="time.minutes" @click="options.syncTime=false;">
+	            </div>
+	            <div class="control-row">
+	                <label for="seconds">Seconds</label>
+	                <input id="seconds" type="number" min="0" max="59" v-model="time.seconds" @click="options.syncTime=false;">
+	            </div>
+	        </section>
+	
+	        <section class="control-section">
+	            <h4>Parameter Presets</h4>
+	            <div class="button-grid">
+	                <button @click="setParams('chaoticHours')">Chaotic hours, ordered minutes,  (default)</button>
+	                <button @click="setParams('chaoticMinutes')">Ordered hours, chaotic minutes</button>
+	                <button @click="setParams('chaoticHoursMinuteGap')">Chaotic hours, ordered minutes with a gap on 10-12</button>
+	                <button @click="setParams('oneWeekRotation')">The ring fully rotates in one week</button>
+	            </div>
+	        </section>
+	
+	        <section class="control-section">
+	            <h4>Parameters</h4>
+	            <div class="control-row">
+	                <label for="numberOfMarksForHoursOnRotatingDial">Number of marks for hours on rotating dial:</label>
+	                <input id="numberOfMarksForHoursOnRotatingDial" type="number" min="1" max="60" v-model="params.numberOfMarksForHoursOnRotatingDial">
+	            </div>
+	            <div class="control-row">
+	                <label for="numberOfMarksForMinutesOnRotatingDial">Number of marks for minutes on rotating dial:</label>
+	                <input id="numberOfMarksForMinutesOnRotatingDial" type="number" disabled="true" v-model="params.numberOfMarksForMinutesOnRotatingDial">
+	            </div>
+	            <div class="control-row choice-row">
+	                <span class="labelForInputGroup">Middle ring rotates:</span>
+	                <div class="choice-grid">
+	                    <label class="choice"><input type="radio" v-model="params.isRotatingClockwise" :value="true" />clockwise</label>
+	                    <label class="choice"><input type="radio" v-model="params.isRotatingClockwise" :value="false" />counter-clockwise</label>
+	                </div>
+	            </div>
+	            <div class="control-row choice-row">
+	                <span class="labelForInputGroup">Distance between hour markers:</span>
+	                <div class="choice-grid">
+	                    <label class="choice"><input type="radio" v-model="params.areFixedHoursShorter" :value="true" />shorter</label>
+	                    <label class="choice"><input type="radio" v-model="params.areFixedHoursShorter" :value="false" />longer</label>
+	                </div>
+	            </div>
+	            <div class="control-row choice-row">
+	                <span class="labelForInputGroup">Distance between minute markers:</span>
+	                <div class="choice-grid">
+	                    <label class="choice"><input type="radio" v-model="params.areFixedMinutesShorter" :value="true" />shorter</label>
+	                    <label class="choice"><input type="radio" v-model="params.areFixedMinutesShorter" :value="false" />longer</label>
+	                </div>
+	            </div>
+	            <div class="control-row choice-row">
+	                <span class="labelForInputGroup">Number of hours on the dial:</span>
+	                <div class="choice-grid">
+	                    <label class="choice"><input type="radio" v-model="params.numberOfHours" :value="12" />12</label>
+	                    <label class="choice"><input type="radio" v-model="params.numberOfHours" :value="24" />24</label>
+	                </div>
+	            </div>
+	            <div class="control-row">
+	                <label for="minuteLabelEvery">Display minute labels every N minutes:</label>
+	                <input id="minuteLabelEvery" type="number" min="1" max="60" v-model="visuals.minuteLabelEvery"/> 
+	            </div>
+	            <div class="control-row">
+	                <label for="minuteLabel59">Display label for minute 59:</label>
+	                <input id="minuteLabel59" class="checkbox-control" type="checkbox" v-model="visuals.minuteLabel59"/>
+	            </div>
+	            <div class="control-row">
+	                <label for="minuteMarkerThicknessFactor">Thickness of minute marker.<br>At 1 there is no alignment after minute passes:</label>
+	                <input id="minuteMarkerThicknessFactor" type="number" min="0.1" max="10" step="0.1" v-model="visuals.minuteMarkerThicknessFactor"/>
+	            </div>
+	            <div class="control-row">
+	                <label for="highlightMatchingMarkers">Hightlight matching markers:</label>
+	                <input id="highlightMatchingMarkers" class="checkbox-control" type="checkbox" v-model="visuals.highlightMatchingMarkers"/>
+	            </div>
+	            <div class="control-row">
+	                <label>Rotating ring makes a full rotation in N hours:</label>
+	                <input type="number" disabled :value="params.numberOfMarksForHoursOnRotatingDial * params.numberOfHours"/>
+	            </div>
+	        </section>
+	    </div>
+	</div>
 {% endraw %}
 
 <hr>
