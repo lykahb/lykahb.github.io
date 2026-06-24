@@ -225,16 +225,21 @@
 	    stroke-width: 2.4px;
 	}
 	
-	.rotatingDialInnerCircle, .rotatingDialOuterCircle {
+	.rotatingDialInnerCircleStroke, .rotatingDialOuterCircleStroke {
 	    fill: none;
 	    stroke: var(--clock-marker);
 	    stroke-width: 1.4px;
 	}
 	
-	.outerDialCircle {
-	    fill: var(--clock-paper);
+	.outerDialCircleStroke {
+	    fill: none;
 	    stroke: var(--clock-ink);
 	    stroke-width: 2px;
+	}
+
+	.outerDialCircleFill {
+	    fill: var(--clock-paper);
+	    stroke: none;
 	}
 	
 	.minuteMarker {
@@ -268,34 +273,45 @@
 <div id="clockAndControls">
     <svg id="clock" viewBox="0 0 400 400" @vue:mounted="setupUpdate">
         <defs>
+            <clipPath id="fixedMinuteMarkerClipPath">
+                <path :d="ringClipPath(visuals.radiusOfRotatingDial, visuals.radiusOfOuterDial)" clip-rule="evenodd"></path>
+            </clipPath>
+            <clipPath id="rotatingMinuteMarkerClipPath">
+                <path :d="ringClipPath(visuals.radiusOfInnerFixedDial, visuals.radiusOfRotatingDial)" clip-rule="evenodd"></path>
+            </clipPath>
+            <clipPath id="fixedHourMarkerClipPath">
+                <path :d="ringClipPath(visuals.radiusOfInnerFixedDial / visuals.phi, visuals.radiusOfInnerFixedDial)" clip-rule="evenodd"></path>
+            </clipPath>
+            <clipPath id="rotatingHourMarkerClipPath">
+                <path :d="ringClipPath(visuals.radiusOfInnerFixedDial, visuals.radiusOfInnerFixedDial + (visuals.radiusOfRotatingDial - visuals.radiusOfInnerFixedDial) / visuals.phi)" clip-rule="evenodd"></path>
+            </clipPath>
             <path id="rotatingMinuteMarker"
                 :d="markerPath(visuals.radiusOfInnerFixedDial, visuals.radiusOfRotatingDial, visuals.minuteMarkerThicknessFactor * Math.abs(params.angleDeltaOfRotatingDialPerMinute), false)"></path>
             <path id="fixedMinuteMarker"
                 :d="markerPath(visuals.radiusOfOuterDial - visuals.fixedMinuteMarkerLength, visuals.radiusOfOuterDial, visuals.minuteMarkerThicknessFactor * Math.abs(params.angleDeltaOfRotatingDialPerMinute), false)"></path>
             <path id="fixedHourMarkerPath"
                 :d="markerPath(visuals.radiusOfInnerFixedDial, visuals.radiusOfInnerFixedDial / visuals.phi, 60 * Math.abs(params.angleDeltaOfRotatingDialPerMinute), false)"></path>
-            <clipPath id="fixedHourMarkerClipPath">
-                <use href="#fixedHourMarkerPath" />
-            </clipPath>
-            <use id="fixedHourMarker" href="#fixedHourMarkerPath" paint-order="fill" clip-path="url(#fixedHourMarkerClipPath)"></use>
+            <use id="fixedHourMarker" href="#fixedHourMarkerPath" paint-order="fill"></use>
             <path id="rotatingHourMarkerPathClosed"
                 :d="markerPath(visuals.radiusOfInnerFixedDial, visuals.radiusOfInnerFixedDial + (visuals.radiusOfRotatingDial - visuals.radiusOfInnerFixedDial) / visuals.phi, 60 * Math.abs(params.angleDeltaOfRotatingDialPerMinute), true)"></path>
             <path id="rotatingHourMarkerPath"
                 :d="markerPath(visuals.radiusOfInnerFixedDial, visuals.radiusOfInnerFixedDial + (visuals.radiusOfRotatingDial - visuals.radiusOfInnerFixedDial) / visuals.phi, 60 * Math.abs(params.angleDeltaOfRotatingDialPerMinute), false)"></path>
-            <clipPath id="rotatingHourMarkerClipPath">
-                <use href="#rotatingHourMarkerPath" />
-            </clipPath>
-            <use id="rotatingHourMarker" href="#rotatingHourMarkerPath" paint-order="fill" clip-path="url(#rotatingHourMarkerClipPath)"></use>
-            <use id="rotatingHourMarkerFirst" href="#rotatingHourMarkerPathClosed" paint-order="fill" clip-path="url(#rotatingHourMarkerClipPath)"></use>
+            <use id="rotatingHourMarker" href="#rotatingHourMarkerPath" paint-order="fill"></use>
+            <use id="rotatingHourMarkerFirst" href="#rotatingHourMarkerPathClosed" paint-order="fill"></use>
         </defs>
         <g id="outerDial">
-            <circle class="outerDialCircle" :cx="centerCoordX" :cy="centerCoordY" :r="visuals.radiusOfOuterDial"></circle>
+            <!-- SVG paints in DOM order; draw fills first, clipped markers next, and boundary strokes last. -->
+            <circle class="outerDialCircleFill" :cx="centerCoordX" :cy="centerCoordY" :r="visuals.radiusOfOuterDial"></circle>
 
-            <g v-for="i in Array.from({length: 60}, (x, i) => i)"
-                :class="{minuteMarker: true, dividesByFive: (i % 5 === 0)}"
-                :transform="`rotate(${i * params.angleStepForMinuteMarksOnOuterDial} ${centerCoordX} ${centerCoordY})`">
-                <use href="#fixedMinuteMarker" :class="{'fixedMinuteMarker': true, 'isMarkerMatching': visuals.highlightMatchingMarkers && (time.minutes === i)}"></use>
+            <g clip-path="url(#fixedMinuteMarkerClipPath)">
+                <g v-for="i in Array.from({length: 60}, (x, i) => i)"
+                    :class="{minuteMarker: true, dividesByFive: (i % 5 === 0)}"
+                    :transform="`rotate(${i * params.angleStepForMinuteMarksOnOuterDial} ${centerCoordX} ${centerCoordY})`">
+                    <use href="#fixedMinuteMarker" :class="{'fixedMinuteMarker': true, 'isMarkerMatching': visuals.highlightMatchingMarkers && (time.minutes === i)}"></use>
+                </g>
             </g>
+
+            <circle class="outerDialCircleStroke" :cx="centerCoordX" :cy="centerCoordY" :r="visuals.radiusOfOuterDial"></circle>
 
             <g v-for="i in Array.from({length: 60}, (x, i) => i)"
                 :class="{minuteMarker: true, dividesByFive: (i % 5 === 0)}"
@@ -308,27 +324,37 @@
                 </text>
             </g>
         </g>
-        <circle :cx="centerCoordX" :cy="centerCoordY" :r="visuals.radiusOfRotatingDial" class="rotatingDialOuterCircle"></circle>
         <g id="rotatingDial"
             :transform="`rotate(${totalMinutes * params.angleDeltaOfRotatingDialPerMinute})`">
-            <use v-for="i in Array.from({length: params.numberOfMarksForMinutesOnRotatingDial}, (x, i) => i)"
-                href="#rotatingMinuteMarker"
-                :transform="`rotate(${i * (360 / params.numberOfMarksForMinutesOnRotatingDial)} ${centerCoordX} ${centerCoordY})`"
-                class="rotatingMinuteMarker">
-            </use>
-            <use v-for="i in Array.from({length: params.numberOfMarksForHoursOnRotatingDial}, (x, i) => i)"
-                :href="i == 0 ? '#rotatingHourMarkerFirst' : '#rotatingHourMarker'"
-                :transform="`rotate(${i * (360 / params.numberOfMarksForHoursOnRotatingDial)} ${centerCoordX} ${centerCoordY})`"
-                :class="{'rotatingHourMarker': true, 'isFirstMarker': i == 0}">
-            </use>
+            <g clip-path="url(#rotatingMinuteMarkerClipPath)">
+                <use v-for="i in Array.from({length: params.numberOfMarksForMinutesOnRotatingDial}, (x, i) => i)"
+                    href="#rotatingMinuteMarker"
+                    :transform="`rotate(${i * (360 / params.numberOfMarksForMinutesOnRotatingDial)} ${centerCoordX} ${centerCoordY})`"
+                    class="rotatingMinuteMarker">
+                </use>
+            </g>
+            <g clip-path="url(#rotatingHourMarkerClipPath)">
+                <use v-for="i in Array.from({length: params.numberOfMarksForHoursOnRotatingDial}, (x, i) => i)"
+                    :href="i == 0 ? '#rotatingHourMarkerFirst' : '#rotatingHourMarker'"
+                    :transform="`rotate(${i * (360 / params.numberOfMarksForHoursOnRotatingDial)} ${centerCoordX} ${centerCoordY})`"
+                    :class="{'rotatingHourMarker': true, 'isFirstMarker': i == 0}">
+                </use>
+            </g>
         </g>
+        <circle :cx="centerCoordX" :cy="centerCoordY" :r="visuals.radiusOfRotatingDial" class="rotatingDialOuterCircleStroke"></circle>
         
-        <circle :cx="centerCoordX" :cy="centerCoordY" :r="visuals.radiusOfInnerFixedDial" class="rotatingDialInnerCircle"></circle>
-        <g id="innerHourDial">
+        <g id="innerHourMarkers" clip-path="url(#fixedHourMarkerClipPath)">
             <g v-for="i in Array.from({length: params.numberOfHours}, (x, i) => i)"
                 class="hourMarker"
                 :transform="`rotate(${i * params.angleStepForHourMarksOnInnerDial} ${centerCoordX} ${centerCoordY})`">
                 <use href="#fixedHourMarker" :class="{'fixedHourMarker': true, 'isMarkerMatching': visuals.highlightMatchingMarkers && (time.hours % params.numberOfHours === i)}"></use>
+            </g>
+        </g>
+        <circle :cx="centerCoordX" :cy="centerCoordY" :r="visuals.radiusOfInnerFixedDial" class="rotatingDialInnerCircleStroke"></circle>
+        <g id="innerHourDial">
+            <g v-for="i in Array.from({length: params.numberOfHours}, (x, i) => i)"
+                class="hourMarker"
+                :transform="`rotate(${i * params.angleStepForHourMarksOnInnerDial} ${centerCoordX} ${centerCoordY})`">
                 <circle class="fixedHourMarkerCircle" :cx="centerCoordX"
                     :cy="centerCoordY - visuals.radiusOfInnerFixedDial + (visuals.radiusOfInnerFixedDial * (1 - 1 / visuals.phi)) / 2"></circle>
                 <text :x="centerCoordX" :y="centerCoordY - visuals.radiusOfInnerFixedDial + (visuals.radiusOfInnerFixedDial * (1 - 1 / visuals.phi)) / 2"

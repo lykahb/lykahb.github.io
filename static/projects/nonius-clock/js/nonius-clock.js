@@ -132,19 +132,34 @@ function createClockApp() {
             }
         },
         markerPath(innerRadius, outerRadius, angularSizeDegrees, closePath) {
-            // Marker is shaped like a trapeze. Drawing starts from the inner side of the rotating dial.
+            // Marker is shaped like a trapeze. It overshoots its radial endpoints and is clipped to its ring.
             // The angular size is how much the dial rotates within one minute or hour. Then take a half of it for easier calculation of offsets.
             const angularSizePi = angularSizeDegrees * Math.PI / 180;
             const markerHalfAngularSize = angularSizePi / 2;
-            const innerHorizontalOffset = innerRadius * Math.sin(markerHalfAngularSize);
-            const innerVerticalOffset = innerRadius * Math.cos(markerHalfAngularSize);
-            const outerHorizontalOffset = outerRadius * Math.sin(markerHalfAngularSize);
-            const outerVerticalOffset = outerRadius * Math.cos(markerHalfAngularSize);
+            const markerOvershoot = 4;
+            const radialDirection = Math.sign(outerRadius - innerRadius) || 1;
+            const adjustedInnerRadius = innerRadius - radialDirection * markerOvershoot;
+            const adjustedOuterRadius = outerRadius + radialDirection * markerOvershoot;
+            const innerHorizontalOffset = adjustedInnerRadius * Math.sin(markerHalfAngularSize);
+            const innerVerticalOffset = adjustedInnerRadius * Math.cos(markerHalfAngularSize);
+            const outerHorizontalOffset = adjustedOuterRadius * Math.sin(markerHalfAngularSize);
+            const outerVerticalOffset = adjustedOuterRadius * Math.cos(markerHalfAngularSize);
             return `M${this.centerCoordX - innerHorizontalOffset},${this.centerCoordY - innerVerticalOffset}
                 L${this.centerCoordX - outerHorizontalOffset},${this.centerCoordY - outerVerticalOffset}
                 l${2 * outerHorizontalOffset},0
                 L${this.centerCoordX + innerHorizontalOffset},${this.centerCoordY - innerVerticalOffset}
                 ${closePath ? 'z' : ''}`;
+        },
+        ringClipPath(innerRadius, outerRadius) {
+            const inner = Math.max(0, Math.min(innerRadius, outerRadius));
+            const outer = Math.max(innerRadius, outerRadius);
+            const circlePath = (radius, sweepFlag) => `M${this.centerCoordX},${this.centerCoordY - radius}
+                A${radius},${radius} 0 1 ${sweepFlag} ${this.centerCoordX},${this.centerCoordY + radius}
+                A${radius},${radius} 0 1 ${sweepFlag} ${this.centerCoordX},${this.centerCoordY - radius}`;
+            if (inner === 0) {
+                return circlePath(outer, 1);
+            }
+            return `${circlePath(outer, 1)} ${circlePath(inner, 0)}`;
         },
         updateClock() {
             this.time.currentDate = new Date();
