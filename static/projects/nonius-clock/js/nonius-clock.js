@@ -69,7 +69,19 @@ function createClockApp() {
 
         // Time
         time: {
-            date: new Date(),
+            currentDate: new Date(),
+            
+            // Positive, between 0 and equivalent of 24h.
+            // This enables displaying time other than current.
+            offsetSeconds: 0,
+
+            get date() {
+                // Clone to avoid mutating currentDate
+                const date = new Date(this.currentDate);
+                date.setSeconds(date.getSeconds() + this.offsetSeconds);
+                return date;
+            },
+
             get hours() {
                 return this.date.getHours()
             },
@@ -80,8 +92,6 @@ function createClockApp() {
                 return this.date.getSeconds()
             }
         },
-        // Positive, between 0 and equivalent of 24h
-        timeOffsetSeconds: 0,
 
         get centerCoordX() {
             return this.visuals.viewPortSize / 2
@@ -116,12 +126,10 @@ function createClockApp() {
             const date = new Date();
             const currentTimeSeconds = this.secondsWithinHMS(date.getHours(), date.getMinutes(), date.getSeconds());
             if (targetSeconds >= currentTimeSeconds) {
-                this.timeOffsetSeconds = targetSeconds - currentTimeSeconds;
+                this.time.offsetSeconds = targetSeconds - currentTimeSeconds;
             } else {
-                this.timeOffsetSeconds = targetSeconds - currentTimeSeconds + this.getSecondsInDay();
+                this.time.offsetSeconds = targetSeconds - currentTimeSeconds + this.getSecondsInDay();
             }
-
-            this.updateClock();
         },
         markerPath(innerRadius, outerRadius, angularSizeDegrees, closePath) {
             // Marker is shaped like a trapeze. Drawing starts from the inner side of the rotating dial.
@@ -139,20 +147,20 @@ function createClockApp() {
                 ${closePath ? 'z' : ''}`;
         },
         updateClock() {
-            const date = new Date();
-            date.setSeconds(date.getSeconds() + this.timeOffsetSeconds);
-            this.time.date = date;
+            this.time.currentDate = new Date();
         },
         useCurrentTime() {
-            this.timeOffsetSeconds = 0;
+            // Calling updateClock prevents a hiccup mid-animation
             this.updateClock();
+            this.time.offsetSeconds = 0;
         },
         setMidnight() {
+            this.updateClock();
             this.setOffsetForTime(0, 0, 0);
         },
         setRandomTime() {
-            this.timeOffsetSeconds = Math.floor(Math.random() * this.getSecondsInDay());
             this.updateClock();
+            this.time.offsetSeconds = Math.floor(Math.random() * this.getSecondsInDay());
         },
         setParams(option) {
             if (option == "chaoticHours") {

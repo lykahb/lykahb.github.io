@@ -580,12 +580,6 @@ ul {
   max-width: 96rem;
 }
 
-#clock {
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  background: rgba(255, 255, 255, 0.72);
-}
-
 #controls {
   padding: 1.8rem;
   border: 1px solid var(--line);
