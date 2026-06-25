@@ -118,6 +118,7 @@ function createClockApp() {
             }
         },
         selectedTimeOption: "current",
+        manualTransitionTargetDate: null,
         weekdays: [
             "Monday",
             "Tuesday",
@@ -185,8 +186,10 @@ function createClockApp() {
                 return;
             }
             date.setMilliseconds(this.time.date.getMilliseconds());
-            this.selectedTimeOption = null;
-            this.setOffsetForDate(date);
+            this.runManualTimeChange(() => {
+                this.selectedTimeOption = null;
+                this.setOffsetForDate(date);
+            });
         },
         formatDebugNumber(value, fractionDigits) {
             return Number(value).toLocaleString("en-US", {
@@ -227,6 +230,21 @@ function createClockApp() {
         },
         setOffsetForDate(date) {
             this.time.offsetSeconds = (date.getTime() - this.time.currentDate.getTime()) / 1000;
+        },
+        rotatingDialAngleDegreesForDate(date) {
+            return this.rotationDegreesForSeconds(this.secondsSinceWeekStart(date));
+        },
+        runManualTimeChange(changeTime) {
+            // CSS transform easing restarts on every target change. Latch the user-chosen
+            // ring target during the transition so live clock ticks keep the digital time
+            // accurate without retargeting the ring mid-animation.
+            const previousAngle = this.rotatingDialAngleDegrees;
+            changeTime();
+            const targetDate = new Date(this.time.date);
+            const targetAngle = this.rotatingDialAngleDegreesForDate(targetDate);
+            if (this.manualTransitionTargetDate || Math.abs(targetAngle - previousAngle) > 1e-9) {
+                this.manualTransitionTargetDate = targetDate;
+            }
         },
         markerPath(innerRadius, outerRadius, markerSpanDegrees, closePath) {
             // Marker is shaped like a trapeze. It overshoots its radial endpoints and is clipped to its ring.
@@ -304,18 +322,24 @@ function createClockApp() {
             this.time.currentDate = new Date();
         },
         useCurrentTime() {
-            this.selectedTimeOption = "current";
-            this.time.offsetSeconds = 0;
+            this.runManualTimeChange(() => {
+                this.selectedTimeOption = "current";
+                this.time.offsetSeconds = 0;
+            });
         },
         setMidnight() {
-            this.selectedTimeOption = "midnight";
-            const midnight = new Date(this.time.currentDate.getFullYear(), this.time.currentDate.getMonth(), this.time.currentDate.getDate());
-            this.setOffsetForDate(midnight);
+            this.runManualTimeChange(() => {
+                this.selectedTimeOption = "midnight";
+                const midnight = new Date(this.time.currentDate.getFullYear(), this.time.currentDate.getMonth(), this.time.currentDate.getDate());
+                this.setOffsetForDate(midnight);
+            });
         },
         setRandomTime() {
-            this.selectedTimeOption = "random";
-            const rotationPeriodSeconds = 360 / this.params.rotatingDialDegreesPerSecond;
-            this.time.offsetSeconds = Math.floor(Math.random() * rotationPeriodSeconds);
+            this.runManualTimeChange(() => {
+                this.selectedTimeOption = "random";
+                const rotationPeriodSeconds = 360 / this.params.rotatingDialDegreesPerSecond;
+                this.time.offsetSeconds = Math.floor(Math.random() * rotationPeriodSeconds);
+            });
         },
         setParams(option) {
             const preset = this.paramPresets[option];
@@ -346,7 +370,16 @@ function createClockApp() {
                 && this.visuals.minuteLabel59 === preset.minuteLabel59;
         },
         get rotatingDialAngleDegrees() {
-            return this.rotationDegreesForSeconds(this.secondsSinceWeekStart(this.time.date));
+            const date = this.manualTransitionTargetDate || this.time.date;
+            return this.rotatingDialAngleDegreesForDate(date);
+        },
+        finishRotatingDialTransition(event) {
+            if ((event.currentTarget && event.target && event.currentTarget !== event.target)
+                || event.propertyName !== "transform"
+                || !this.manualTransitionTargetDate) {
+                return;
+            }
+            this.manualTransitionTargetDate = null;
         },
         // One weekday spans exactly the angle swept by the rotating ring over 24h.
         // For the Week Rotation preset this is 360 / 7 degrees.

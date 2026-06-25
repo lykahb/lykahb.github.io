@@ -495,6 +495,7 @@
             </g>
         </g>
         <g id="rotatingDial"
+            @transitionend="finishRotatingDialTransition($event)"
             :transform="`rotate(${rotatingDialAngleDegrees})`">
             <g clip-path="url(#rotatingMinuteMarkerClipPath)">
                 <use v-for="i in Array.from({length: params.numberOfMarksForMinutesOnRotatingDial}, (x, i) => i)"
