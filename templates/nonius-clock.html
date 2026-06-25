@@ -141,15 +141,11 @@
     }
 
     .button-grid {
-        display: flex;
-        overflow-x: auto;
-        padding-bottom: 0.2rem;
-        scrollbar-width: thin;
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr));
     }
 
     .button-grid button {
-        flex: 0 0 auto;
-        white-space: nowrap;
+        white-space: normal;
     }
 
     #controls input[type='number'],
