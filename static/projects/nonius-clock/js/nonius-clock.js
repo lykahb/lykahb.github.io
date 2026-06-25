@@ -99,8 +99,8 @@ function createClockApp() {
         time: {
             currentDate: new Date(),
             
-            // Positive, between 0 and equivalent of 24h.
             // This enables displaying time other than current.
+            // The value is +- period of full rotation.
             offsetSeconds: 0,
 
             get date() {
@@ -222,11 +222,7 @@ function createClockApp() {
             const targetSeconds = this.secondsWithinHMS(hours, minutes, seconds);
             const date = new Date();
             const currentTimeSeconds = this.secondsWithinHMS(date.getHours(), date.getMinutes(), date.getSeconds());
-            if (targetSeconds >= currentTimeSeconds) {
-                this.time.offsetSeconds = targetSeconds - currentTimeSeconds;
-            } else {
-                this.time.offsetSeconds = targetSeconds - currentTimeSeconds + this.getSecondsInDay();
-            }
+            this.time.offsetSeconds = targetSeconds - currentTimeSeconds;
         },
         markerPath(innerRadius, outerRadius, markerSpanDegrees, closePath) {
             // Marker is shaped like a trapeze. It overshoots its radial endpoints and is clipped to its ring.
@@ -317,7 +313,8 @@ function createClockApp() {
         setRandomTime() {
             this.updateClock();
             this.selectedTimeOption = "random";
-            this.time.offsetSeconds = Math.floor(Math.random() * this.getSecondsInWeek());
+            const rotationPeriodSeconds = 360 / this.params.rotatingDialDegreesPerSecond;
+            this.time.offsetSeconds = Math.floor(Math.random() * rotationPeriodSeconds);
         },
         setParams(option) {
             const preset = this.paramPresets[option];
