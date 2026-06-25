@@ -104,10 +104,7 @@ function createClockApp() {
             offsetSeconds: 0,
 
             get date() {
-                // Clone to avoid mutating currentDate
-                const date = new Date(this.currentDate);
-                date.setSeconds(date.getSeconds() + this.offsetSeconds);
-                return date;
+                return new Date(this.currentDate.getTime() + this.offsetSeconds * 1000);
             },
 
             get hours() {
@@ -187,8 +184,15 @@ function createClockApp() {
             if (Number.isNaN(date.getTime())) {
                 return;
             }
+            date.setMilliseconds(this.time.date.getMilliseconds());
             this.selectedTimeOption = null;
             this.setOffsetForDate(date);
+        },
+        formatDebugNumber(value, fractionDigits) {
+            return Number(value).toLocaleString("en-US", {
+                maximumFractionDigits: fractionDigits,
+                minimumFractionDigits: fractionDigits
+            });
         },
         // methods
         getSecondsInDay() {
@@ -222,7 +226,7 @@ function createClockApp() {
             return Math.abs(this.rotationDegreesForSeconds(seconds));
         },
         setOffsetForDate(date) {
-            this.time.offsetSeconds = Math.round((date.getTime() - this.time.currentDate.getTime()) / 1000);
+            this.time.offsetSeconds = (date.getTime() - this.time.currentDate.getTime()) / 1000;
         },
         markerPath(innerRadius, outerRadius, markerSpanDegrees, closePath) {
             // Marker is shaped like a trapeze. It overshoots its radial endpoints and is clipped to its ring.
@@ -302,20 +306,16 @@ function createClockApp() {
         useCurrentTime() {
             this.selectedTimeOption = "current";
             this.time.offsetSeconds = 0;
-            // Calling updateClock prevents a hiccup mid-animation
-            this.updateClock();
         },
         setMidnight() {
             this.selectedTimeOption = "midnight";
             const midnight = new Date(this.time.currentDate.getFullYear(), this.time.currentDate.getMonth(), this.time.currentDate.getDate());
             this.setOffsetForDate(midnight);
-            this.updateClock();
         },
         setRandomTime() {
             this.selectedTimeOption = "random";
             const rotationPeriodSeconds = 360 / this.params.rotatingDialDegreesPerSecond;
             this.time.offsetSeconds = Math.floor(Math.random() * rotationPeriodSeconds);
-            this.updateClock();
         },
         setParams(option) {
             const preset = this.paramPresets[option];
