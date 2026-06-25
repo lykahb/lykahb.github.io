@@ -55,7 +55,7 @@ function createClockApp() {
 
         visuals: {
             viewPortSize: 400,
-            radiusOfOuterDial: 180,
+            radiusOfOuterDial: 198,
             minuteLabelEvery: 5,
             minuteLabel59: false,
             minuteMarkerThicknessFactor: 10,

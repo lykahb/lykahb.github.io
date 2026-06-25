@@ -9,7 +9,9 @@
 <style>
     #clockAndControls {
         display: grid;
-        grid-template-columns: minmax(32rem, 1fr) minmax(32rem, 42rem);
+        width: 100%;
+        max-width: none;
+        grid-template-columns: 1fr;
         gap: 1.6rem;
         align-items: start;
     }
@@ -23,8 +25,10 @@
 
     #controls {
         display: grid;
+        width: min(100%, 72rem);
         gap: 1.2rem;
         align-self: start;
+        justify-self: center;
         font-size: 1.4rem;
     }
 
@@ -136,6 +140,18 @@
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
+    .button-grid {
+        display: flex;
+        overflow-x: auto;
+        padding-bottom: 0.2rem;
+        scrollbar-width: thin;
+    }
+
+    .button-grid button {
+        flex: 0 0 auto;
+        white-space: nowrap;
+    }
+
     #controls input[type='number'],
     #controls input[type='time'] {
         width: 100%;
@@ -226,9 +242,18 @@
         height: 2rem;
     }
 
-    @media (max-width: 920px) {
+    @media (min-width: 1200px) {
         #clockAndControls {
-            grid-template-columns: 1fr;
+            position: relative;
+            left: 50%;
+            width: min(calc(100vw - 4rem), 128rem);
+            grid-template-columns: minmax(0, 1fr) minmax(28rem, 32rem);
+            transform: translateX(-50%);
+        }
+
+        #controls {
+            width: 100%;
+            justify-self: stretch;
         }
     }
 
@@ -303,7 +328,8 @@
     .rotatingDialInnerCircleStroke,
     .rotatingDialOuterCircleStroke {
         fill: none;
-        stroke: var(--clock-marker);
+        /* Display no stroke - it obscures alignment. Semitransparent ones may work better. */
+        stroke: none;
         stroke-width: 1.4px;
     }
 
@@ -455,12 +481,12 @@
             </section>
 
             <section class="control-section">
-                <h4>Parameter Presets</h4>
+                <h4>Presets</h4>
                 <div class="button-grid">
-                    <button @click="setParams('chaoticHours')" :class="{isSelectedOption: isSelectedParamPreset('chaoticHours')}" :aria-pressed="isSelectedParamPreset('chaoticHours')">Chaotic hours, ordered minutes (default)</button>
-                    <button @click="setParams('chaoticMinutes')" :class="{isSelectedOption: isSelectedParamPreset('chaoticMinutes')}" :aria-pressed="isSelectedParamPreset('chaoticMinutes')">Ordered hours, chaotic minutes</button>
-                    <button @click="setParams('chaoticHoursMinuteGap')" :class="{isSelectedOption: isSelectedParamPreset('chaoticHoursMinuteGap')}" :aria-pressed="isSelectedParamPreset('chaoticHoursMinuteGap')">Chaotic hours, ordered minutes with a gap on 10-12</button>
-                    <button @click="setParams('oneWeekRotation')" :class="{isSelectedOption: isSelectedParamPreset('oneWeekRotation')}" :aria-pressed="isSelectedParamPreset('oneWeekRotation')">The ring fully rotates in one week</button>
+                    <button @click="setParams('chaoticHours')" :class="{isSelectedOption: isSelectedParamPreset('chaoticHours')}" :aria-pressed="isSelectedParamPreset('chaoticHours')" aria-label="Ordered minutes preset" title="Ordered minutes preset">Ordered minutes</button>
+                    <button @click="setParams('chaoticMinutes')" :class="{isSelectedOption: isSelectedParamPreset('chaoticMinutes')}" :aria-pressed="isSelectedParamPreset('chaoticMinutes')" aria-label="Ordered hours preset" title="Ordered hours preset">Ordered hours</button>
+                    <button @click="setParams('chaoticHoursMinuteGap')" :class="{isSelectedOption: isSelectedParamPreset('chaoticHoursMinuteGap')}" :aria-pressed="isSelectedParamPreset('chaoticHoursMinuteGap')" aria-label="Compact minutes preset" title="Compact minutes preset">Compact minutes</button>
+                    <button @click="setParams('oneWeekRotation')" :class="{isSelectedOption: isSelectedParamPreset('oneWeekRotation')}" :aria-pressed="isSelectedParamPreset('oneWeekRotation')" aria-label="Week rotation preset" title="Week rotation preset">Week rotation</button>
                 </div>
             </section>
 
