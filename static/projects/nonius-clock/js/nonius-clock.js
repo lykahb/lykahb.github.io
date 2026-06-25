@@ -209,18 +209,31 @@ function createClockApp() {
         },
         // Rotation model:
         // - The clock has one physical moving part: the rotating ring.
-        // - Its angle is elapsed seconds multiplied by the angular velocity below.
+        // - Its angle is civil seconds multiplied by the angular velocity below.
         // - Whole-day offsets do not disturb the minute/hour readings because they
         //   rotate the ring by 24 rotating-minute-marker steps. With 12h and 24h
         //   dials, the hour-marker set also lands on itself after each day.
         // - The weekday scale is therefore just a fixed scale read by marker zero;
         //   it must never choose a separate ring angle.
+        // - Civil time jumps, such as daylight saving transitions, can still jump
+        //   the ring because the displayed civil time jumps too.
         secondsSinceMidnight(date) {
             return this.secondsWithinHMS(date.getHours(), date.getMinutes(), date.getSeconds());
         },
-        secondsSinceWeekStart(date) {
-            const mondayBasedDayIndex = (date.getDay() + 6) % 7;
-            return mondayBasedDayIndex * this.getSecondsInDay() + this.secondsSinceMidnight(date);
+        localCivilDayUtcMs(date) {
+            // Date.UTC gives a stable serial number for the local calendar day.
+            // It deliberately ignores timezone offsets, so every civil date is
+            // exactly one nominal 24h day after the previous civil date.
+            return Date.UTC(date.getFullYear(), date.getMonth(), date.getDate());
+        },
+        civilSeconds(date) {
+            // localCivilDayUtcMs() has day zero on 1970-01-01, which was Thursday.
+            // Subtract four nominal days so the weekly phase starts on Monday,
+            // matching the weekday scale's Monday-at-12-o'clock layout.
+            const daysFromCivilZeroToMonday = 4;
+            return this.localCivilDayUtcMs(date) / 1000
+                - daysFromCivilZeroToMonday * this.getSecondsInDay()
+                + this.secondsSinceMidnight(date);
         },
         rotationDegreesForSeconds(seconds) {
             return seconds * this.params.rotatingDialDegreesPerSecond;
@@ -232,7 +245,7 @@ function createClockApp() {
             this.time.offsetSeconds = (date.getTime() - this.time.currentDate.getTime()) / 1000;
         },
         rotatingDialAngleDegreesForDate(date) {
-            return this.rotationDegreesForSeconds(this.secondsSinceWeekStart(date));
+            return this.rotationDegreesForSeconds(this.civilSeconds(date));
         },
         runManualTimeChange(changeTime) {
             // CSS transform easing restarts on every target change. Latch the user-chosen
