@@ -422,7 +422,7 @@
         <g id="innerHourMarkers" clip-path="url(#fixedHourMarkerClipPath)">
             <g v-for="i in Array.from({length: params.numberOfHours}, (x, i) => i)"
                 class="hourMarker"
-                :transform="`rotate(${i * params.angleStepForFixedHourMarks} ${centerCoordX} ${centerCoordY})`">
+                :transform="`rotate(${fixedHourMarkerAngle(i)} ${centerCoordX} ${centerCoordY})`">
                 <use href="#fixedHourMarker" :class="{'fixedHourMarker': true, 'isMarkerMatching': visuals.highlightMatchingMarkers && (time.hours % params.numberOfHours === i)}"></use>
             </g>
         </g>
@@ -430,12 +430,12 @@
         <g id="innerHourDial">
             <g v-for="i in Array.from({length: params.numberOfHours}, (x, i) => i)"
                 class="hourMarker"
-                :transform="`rotate(${i * params.angleStepForFixedHourMarks} ${centerCoordX} ${centerCoordY})`">
+                :transform="`rotate(${fixedHourMarkerAngle(i)} ${centerCoordX} ${centerCoordY})`">
                 <circle class="fixedHourMarkerCircle" :cx="centerCoordX"
                     :cy="centerCoordY - visuals.radiusOfInnerFixedDial + (visuals.radiusOfInnerFixedDial * (1 - 1 / visuals.phi)) / 2"></circle>
                 <text :x="centerCoordX" :y="centerCoordY - visuals.radiusOfInnerFixedDial + (visuals.radiusOfInnerFixedDial * (1 - 1 / visuals.phi)) / 2"
                     text-anchor="middle" dominant-baseline="central"
-                    :transform="`rotate(${-i * params.angleStepForFixedHourMarks} ${centerCoordX} ${centerCoordY - visuals.radiusOfInnerFixedDial + (visuals.radiusOfInnerFixedDial * (1 - 1 / visuals.phi)) / 2})`">
+                    :transform="`rotate(${-fixedHourMarkerAngle(i)} ${centerCoordX} ${centerCoordY - visuals.radiusOfInnerFixedDial + (visuals.radiusOfInnerFixedDial * (1 - 1 / visuals.phi)) / 2})`">
                     {{ i == 0 ? params.numberOfHours : i }}
                 </text>
             </g>

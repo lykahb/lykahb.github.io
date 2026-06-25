@@ -18,7 +18,8 @@ function createClockApp() {
                 }
                 return value;
             },
-            // signed angle. If negative, the marks extend counter-clockwise from the top.
+            // Signed alignment step between fixed hour marks. The placement helper below
+            // wraps non-12 hour marks backward from 12 so the larger gap lands between 12 and 1.
             get angleStepForFixedHourMarks () {
                 // Each hour the next minute mark aligns.
                 const angleStepCount = this.validateAngleStepCount(this.numberOfAngleStepsForFixedHourMarks, "numberOfAngleStepsForFixedHourMarks");
@@ -206,6 +207,12 @@ function createClockApp() {
                 return circlePath(outer, 1);
             }
             return `${circlePath(outer, 1)} ${circlePath(inner, 0)}`;
+        },
+        fixedHourMarkerAngle(hourIndex) {
+            if (hourIndex === 0) {
+                return 0;
+            }
+            return (hourIndex - this.params.numberOfHours) * this.params.angleStepForFixedHourMarks;
         },
         updateClock() {
             this.time.currentDate = new Date();
