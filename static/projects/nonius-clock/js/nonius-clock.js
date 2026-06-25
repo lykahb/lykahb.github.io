@@ -171,21 +171,24 @@ function createClockApp() {
         get centerCoordY() {
             return this.visuals.viewPortSize / 2
         },
-        formatTime(time) {
-            const date = new Date();
-            date.setHours(time.hours, time.minutes, time.seconds, 0);
-            return date.toTimeString().slice(0, 8);
+        formatDateTimeInputValue(date) {
+            const pad = value => String(value).padStart(2, "0");
+            return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
+                + `T${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
         },
         get timeInputValue() {
-            return this.formatTime(this.time);
+            return this.formatDateTimeInputValue(this.time.date);
         },
         set timeInputValue(value) {
             if (!value) {
                 return;
             }
-            const [hours, minutes, seconds = "0"] = value.split(":");
+            const date = new Date(value);
+            if (Number.isNaN(date.getTime())) {
+                return;
+            }
             this.selectedTimeOption = null;
-            this.setOffsetForTime(Number(hours) || 0, Number(minutes) || 0, Number(seconds) || 0);
+            this.setOffsetForDate(date);
         },
         // methods
         getSecondsInDay() {
@@ -218,11 +221,8 @@ function createClockApp() {
         rotationSpanDegreesForSeconds(seconds) {
             return Math.abs(this.rotationDegreesForSeconds(seconds));
         },
-        setOffsetForTime(hours, minutes, seconds) {
-            const targetSeconds = this.secondsWithinHMS(hours, minutes, seconds);
-            const date = new Date();
-            const currentTimeSeconds = this.secondsWithinHMS(date.getHours(), date.getMinutes(), date.getSeconds());
-            this.time.offsetSeconds = targetSeconds - currentTimeSeconds;
+        setOffsetForDate(date) {
+            this.time.offsetSeconds = Math.round((date.getTime() - this.time.currentDate.getTime()) / 1000);
         },
         markerPath(innerRadius, outerRadius, markerSpanDegrees, closePath) {
             // Marker is shaped like a trapeze. It overshoots its radial endpoints and is clipped to its ring.
@@ -300,21 +300,22 @@ function createClockApp() {
             this.time.currentDate = new Date();
         },
         useCurrentTime() {
-            // Calling updateClock prevents a hiccup mid-animation
-            this.updateClock();
             this.selectedTimeOption = "current";
             this.time.offsetSeconds = 0;
+            // Calling updateClock prevents a hiccup mid-animation
+            this.updateClock();
         },
         setMidnight() {
-            this.updateClock();
             this.selectedTimeOption = "midnight";
-            this.setOffsetForTime(0, 0, 0);
+            const midnight = new Date(this.time.currentDate.getFullYear(), this.time.currentDate.getMonth(), this.time.currentDate.getDate());
+            this.setOffsetForDate(midnight);
+            this.updateClock();
         },
         setRandomTime() {
-            this.updateClock();
             this.selectedTimeOption = "random";
             const rotationPeriodSeconds = 360 / this.params.rotatingDialDegreesPerSecond;
             this.time.offsetSeconds = Math.floor(Math.random() * rotationPeriodSeconds);
+            this.updateClock();
         },
         setParams(option) {
             const preset = this.paramPresets[option];

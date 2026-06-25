@@ -149,7 +149,7 @@
     }
 
     #controls input[type='number'],
-    #controls input[type='time'] {
+    #controls input[type='datetime-local'] {
         width: 100%;
         min-height: 3.8rem;
         padding: 0.7rem 0.9rem;
@@ -174,7 +174,7 @@
     }
 
     #controls input[type='number']:focus,
-    #controls input[type='time']:focus,
+    #controls input[type='datetime-local']:focus,
     .choice:focus-within {
         outline: 2px solid rgba(35, 120, 105, 0.22);
         outline-offset: 2px;
@@ -510,7 +510,7 @@
             <section class="control-section">
                 <h4>Time</h4>
                 <div class="control-row time-row">
-                    <input id="timeInput" type="time" step="1" v-model="timeInputValue" aria-label="Time">
+                    <input id="timeInput" type="datetime-local" step="1" v-model="timeInputValue" aria-label="Date and time">
                 </div>
                 <div class="time-actions">
                     <button @click="useCurrentTime()" :class="{isSelectedOption: selectedTimeOption === 'current'}" :aria-pressed="selectedTimeOption === 'current'">Current</button>
