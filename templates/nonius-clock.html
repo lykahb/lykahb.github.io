@@ -274,6 +274,9 @@
         --clock-marker: #93a1a1;
         --clock-marker-strong: #657b83;
         --clock-highlight: #dc322f;
+        --clock-weekday: #268bd2;
+        --clock-weekday-separator: #859900;
+        --clock-weekday-pointer: #b58900;
     }
 
     #clock text {
@@ -311,6 +314,12 @@
         stroke: none;
     }
 
+    .rotatingHourMarker.isWeekdayPointer {
+        fill: var(--clock-weekday-pointer);
+        stroke: var(--clock-ink);
+        stroke-width: 0.8px;
+    }
+
     .fixedHourMarkerCircle {
         r: 8px;
         stroke: var(--clock-ink);
@@ -342,6 +351,25 @@
     .outerDialCircleFill {
         fill: var(--clock-paper);
         stroke: none;
+    }
+
+    .weekdayTextGuide {
+        fill: none;
+        stroke: none;
+    }
+
+    .weekdayName {
+        fill: var(--clock-weekday);
+        font-size: 9px;
+        letter-spacing: 0;
+        stroke-width: 0.5px;
+    }
+
+    .weekdaySeparator {
+        fill: none;
+        stroke: var(--clock-weekday-separator);
+        stroke-linecap: round;
+        stroke-width: 1.2px;
     }
 
     .minuteMarker {
@@ -405,6 +433,21 @@
             <!-- SVG paints in DOM order; draw fills first, clipped markers next, and boundary strokes last. -->
             <circle class="outerDialCircleFill" :cx="centerCoordX" :cy="centerCoordY" :r="visuals.radiusOfOuterDial"></circle>
 
+            <g v-if="visuals.showWeekdayRing" id="weekdayScale">
+                <path v-for="(day, i) in weekdays"
+                    :id="`weekdayTextPath-${i}`"
+                    class="weekdayTextGuide"
+                    :d="weekdayTextPath(i)"></path>
+                <path v-for="i in Array.from({length: weekdays.length + 1}, (x, i) => i)"
+                    class="weekdaySeparator"
+                    :d="weekdaySeparatorPath(i)"></path>
+                <text v-for="(day, i) in weekdays" class="weekdayName" text-anchor="middle">
+                    <textPath :href="`#weekdayTextPath-${i}`" startOffset="50%">
+                        {{ day }}
+                    </textPath>
+                </text>
+            </g>
+
             <g clip-path="url(#fixedMinuteMarkerClipPath)">
                 <g v-for="i in Array.from({length: 60}, (x, i) => i)"
                     :class="{minuteMarker: true, dividesByFive: (i % 5 === 0)}"
@@ -427,7 +470,7 @@
             </g>
         </g>
         <g id="rotatingDial"
-            :transform="`rotate(${totalMinutes * params.angleDeltaOfRotatingDialPerMinute})`">
+            :transform="`rotate(${rotatingDialAngle})`">
             <g clip-path="url(#rotatingMinuteMarkerClipPath)">
                 <use v-for="i in Array.from({length: params.numberOfMarksForMinutesOnRotatingDial}, (x, i) => i)"
                     href="#rotatingMinuteMarker"
@@ -439,7 +482,7 @@
                 <use v-for="i in Array.from({length: params.numberOfMarksForHoursOnRotatingDial}, (x, i) => i)"
                     :href="i == 0 ? '#rotatingHourMarkerFirst' : '#rotatingHourMarker'"
                     :transform="`rotate(${i * (360 / params.numberOfMarksForHoursOnRotatingDial)} ${centerCoordX} ${centerCoordY})`"
-                    :class="{'rotatingHourMarker': true, 'isFirstMarker': i == 0}">
+                    :class="{'rotatingHourMarker': true, 'isFirstMarker': i == 0, 'isWeekdayPointer': visuals.showWeekdayRing && i == 0}">
                 </use>
             </g>
         </g>
@@ -519,6 +562,10 @@
                     <div class="control-row">
                         <label for="highlightMatchingMarkers">Highlight matches:</label>
                         <input id="highlightMatchingMarkers" class="checkbox-control" type="checkbox" v-model="visuals.highlightMatchingMarkers"/>
+                    </div>
+                    <div class="control-row">
+                        <label for="showWeekdayRing">Weekday scale:</label>
+                        <input id="showWeekdayRing" class="checkbox-control" type="checkbox" v-model="visuals.showWeekdayRing"/>
                     </div>
                     <div class="control-row">
                         <label>Rotation period:</label>

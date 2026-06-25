@@ -50,6 +50,9 @@ function createClockApp() {
                 const minuteVernierConstant = hourVernierConstant / 60;
 
                 return this.isRotatingClockwise ? minuteVernierConstant : -minuteVernierConstant;
+            },
+            get angleDeltaOfRotatingDialPerSecond() {
+                return this.angleDeltaOfRotatingDialPerMinute / 60;
             }
         },
 
@@ -60,6 +63,7 @@ function createClockApp() {
             minuteLabel59: false,
             minuteMarkerThicknessFactor: 10,
             highlightMatchingMarkers: true,
+            showWeekdayRing: false,
             get fixedMinuteMarkerLength() {
                 return this.radiusOfOuterDial - this.radiusOfRotatingDial;
             },
@@ -68,6 +72,9 @@ function createClockApp() {
             },
             get rotatingMinuteMarkerLength() {
                 return this.radiusOfRotatingDial - this.radiusOfInnerFixedDial;
+            },
+            get weekdayTextRadius() {
+                return this.radiusOfRotatingDial + (this.radiusOfOuterDial - this.radiusOfRotatingDial) * 0.7;
             },
             rotatingHourHandLength: 60,
             
@@ -104,6 +111,15 @@ function createClockApp() {
             }
         },
         selectedTimeOption: "current",
+        weekdays: [
+            "Monday",
+            "Tuesday",
+            "Wednesday",
+            "Thursday",
+            "Friday",
+            "Saturday",
+            "Sunday"
+        ],
         paramPresets: {
             chaoticHours: {
                 numberOfMarksForHoursOnRotatingDial: 5,
@@ -165,8 +181,32 @@ function createClockApp() {
         getSecondsInDay() {
             return 24 * 60 * 60;
         },
+        getSecondsInWeek() {
+            return 7 * this.getSecondsInDay();
+        },
         secondsWithinHMS(hours, minutes, seconds) {
             return hours * 60 * 60 + minutes * 60 + seconds;
+        },
+        // Rotation model:
+        // - The clock has one physical moving part: the rotating ring.
+        // - Its angle is elapsed seconds multiplied by the angular velocity below.
+        // - Whole-day offsets do not disturb the minute/hour readings because they
+        //   rotate the ring by 24 rotating-minute-marker steps. With 12h and 24h
+        //   dials, the hour-marker set also lands on itself after each day.
+        // - The weekday scale is therefore just a fixed scale read by marker zero;
+        //   it must never choose a separate ring angle.
+        secondsSinceMidnight(date) {
+            return this.secondsWithinHMS(date.getHours(), date.getMinutes(), date.getSeconds());
+        },
+        secondsSinceWeekStart(date) {
+            const mondayBasedDayIndex = (date.getDay() + 6) % 7;
+            return mondayBasedDayIndex * this.getSecondsInDay() + this.secondsSinceMidnight(date);
+        },
+        angleForSeconds(seconds) {
+            return seconds * this.params.angleDeltaOfRotatingDialPerSecond;
+        },
+        angleSpanForSeconds(seconds) {
+            return Math.abs(this.angleForSeconds(seconds));
         },
         setOffsetForTime(hours, minutes, seconds) {
             const targetSeconds = this.secondsWithinHMS(hours, minutes, seconds);
@@ -208,6 +248,42 @@ function createClockApp() {
             }
             return `${circlePath(outer, 1)} ${circlePath(inner, 0)}`;
         },
+        pointOnCircle(radius, angleDegrees) {
+            const angleRadians = angleDegrees * Math.PI / 180;
+            return {
+                x: this.centerCoordX + radius * Math.sin(angleRadians),
+                y: this.centerCoordY - radius * Math.cos(angleRadians)
+            };
+        },
+        arcPath(radius, startAngleDegrees, endAngleDegrees) {
+            const start = this.pointOnCircle(radius, startAngleDegrees);
+            const end = this.pointOnCircle(radius, endAngleDegrees);
+            const angleSpan = endAngleDegrees - startAngleDegrees;
+            const largeArcFlag = Math.abs(angleSpan) > 180 ? 1 : 0;
+            const sweepFlag = angleSpan >= 0 ? 1 : 0;
+            return `M${start.x},${start.y} A${radius},${radius} 0 ${largeArcFlag} ${sweepFlag} ${end.x},${end.y}`;
+        },
+        radialLinePath(innerRadius, outerRadius, angleDegrees) {
+            const inner = this.pointOnCircle(innerRadius, angleDegrees);
+            const outer = this.pointOnCircle(outerRadius, angleDegrees);
+            return `M${inner.x},${inner.y} L${outer.x},${outer.y}`;
+        },
+        weekdaySeparatorPath(dayIndex) {
+            return this.radialLinePath(
+                this.visuals.radiusOfRotatingDial,
+                this.visuals.radiusOfOuterDial,
+                this.weekdayAngleForDayBoundary(dayIndex)
+            );
+        },
+        weekdayTextPath(dayIndex) {
+            const dayAngle = this.weekdayDayAngle;
+            const textAngle = Math.min(Math.max(dayAngle * 0.84, 24), 150);
+            const centerAngle = this.weekdayAngleForDayBoundary(dayIndex) + this.weekdayDirection * dayAngle / 2;
+            return this.arcPath(this.visuals.weekdayTextRadius, centerAngle - textAngle / 2, centerAngle + textAngle / 2);
+        },
+        weekdayAngleForDayBoundary(dayIndex) {
+            return this.weekdayDirection * dayIndex * this.weekdayDayAngle;
+        },
         fixedHourMarkerAngle(hourIndex) {
             if (hourIndex === 0) {
                 return 0;
@@ -231,7 +307,7 @@ function createClockApp() {
         setRandomTime() {
             this.updateClock();
             this.selectedTimeOption = "random";
-            this.time.offsetSeconds = Math.floor(Math.random() * this.getSecondsInDay());
+            this.time.offsetSeconds = Math.floor(Math.random() * this.getSecondsInWeek());
         },
         setParams(option) {
             const preset = this.paramPresets[option];
@@ -261,8 +337,18 @@ function createClockApp() {
                 && this.visuals.minuteLabelEvery === preset.minuteLabelEvery
                 && this.visuals.minuteLabel59 === preset.minuteLabel59;
         },
-        get totalMinutes() {
-            return this.time.hours * 60 + this.time.minutes + this.time.seconds / 60;
+        get rotatingDialAngle() {
+            return this.angleForSeconds(this.secondsSinceWeekStart(this.time.date));
+        },
+        // One weekday spans exactly the angle swept by the rotating ring over 24h.
+        // For the Week Rotation preset this is 360 / 7 degrees.
+        get weekdayDayAngle() {
+            return this.angleSpanForSeconds(this.getSecondsInDay());
+        },
+        // Match the fixed weekday scale to the ring rotation direction so day boundaries
+        // progress under the weekday pointer as the single rotating ring turns.
+        get weekdayDirection() {
+            return Math.sign(this.params.angleDeltaOfRotatingDialPerSecond) || 1;
         },
         setupUpdate() {
             this.setParams("chaoticHours");
