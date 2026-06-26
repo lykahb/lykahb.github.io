@@ -6,7 +6,38 @@
 // - DegreesPerSecond/Minute: signed angular velocity.
 // - Direction: sign only, not an angle.
 
+// Rotation model:
+// - The clock has one physical moving part: the rotating ring.
+// - Its angle is civil seconds multiplied by the angular velocity below.
+// - Whole-day offsets do not disturb the minute/hour readings because they
+//   rotate the ring by 24 rotating-minute-marker steps. With 12h and 24h
+//   dials, the hour-marker set also lands on itself after each day.
+// - The weekday scale is therefore just a fixed scale read by marker zero;
+//   it must never choose a separate ring angle.
+// - Civil time jumps, such as daylight saving transitions, can still jump
+//   the ring because the displayed civil time jumps too.
+
+function startOfMinute(date) {
+    const dateAtMinuteStart = new Date(date);
+    dateAtMinuteStart.setSeconds(0, 0);
+    return dateAtMinuteStart;
+}
+
+function startOfHour(date) {
+    const dateAtHourStart = new Date(date);
+    dateAtHourStart.setMinutes(0, 0, 0);
+    return dateAtHourStart;
+}
+
+function startOfDay(date) {
+    const dateAtDayStart = new Date(date);
+    dateAtDayStart.setHours(0, 0, 0, 0);
+    return dateAtDayStart;
+}
+
 function createClockApp() {
+    const initialDate = new Date();
+
     return PetiteVue.createApp({
         params: {
             get numberOfMarksForMinutesOnRotatingDial() {
@@ -100,26 +131,20 @@ function createClockApp() {
 
         // Time
         time: {
-            currentDate: new Date(),
-            
-            // This enables displaying time other than current.
-            // The value is +- period of full rotation.
-            offsetSeconds: 0,
-
-            get date() {
-                return new Date(this.currentDate.getTime() + this.offsetSeconds * 1000);
-            },
+            date: initialDate,
+            dateAtMinuteStart: startOfMinute(initialDate),
+            dateAtHourStart: startOfHour(initialDate),
 
             get hours() {
-                return this.date.getHours()
+                return this.dateAtHourStart.getHours()
             },
             get minutes() {
-                return this.date.getMinutes()
-            },
-            get seconds() {
-                return this.date.getSeconds()
+                return this.dateAtMinuteStart.getMinutes()
             }
         },
+        // This enables displaying time other than current.
+        // The value is +- period of full rotation.
+        offsetSeconds: 0,
         selectedTimeOption: "current",
         manualTransitionTargetDate: null,
         weekdays: [
@@ -188,34 +213,26 @@ function createClockApp() {
             if (Number.isNaN(date.getTime())) {
                 return;
             }
-            date.setMilliseconds(this.time.date.getMilliseconds());
             this.runManualTimeChange(() => {
+                const previousDate = this.time.date;
+                date.setMilliseconds(previousDate.getMilliseconds());
+                // The input edit preserves displayed seconds; keep milliseconds aligned too.
+                // Recomputing the offset from wall-clock now would subtract time passed between edits,
+                // so a minute edit could add 59s or 61s instead of exactly 60s.
+                this.offsetSeconds += this.calculateDeltaSeconds(date, previousDate);
                 this.selectedTimeOption = null;
-                this.setOffsetForDate(date);
+                this.setDisplayedDate(date);
             });
         },
         // methods
         getSecondsInDay() {
             return 24 * 60 * 60;
         },
-        getSecondsInWeek() {
-            return 7 * this.getSecondsInDay();
-        },
-        secondsWithinHMS(hours, minutes, seconds) {
-            return hours * 60 * 60 + minutes * 60 + seconds;
-        },
-        // Rotation model:
-        // - The clock has one physical moving part: the rotating ring.
-        // - Its angle is civil seconds multiplied by the angular velocity below.
-        // - Whole-day offsets do not disturb the minute/hour readings because they
-        //   rotate the ring by 24 rotating-minute-marker steps. With 12h and 24h
-        //   dials, the hour-marker set also lands on itself after each day.
-        // - The weekday scale is therefore just a fixed scale read by marker zero;
-        //   it must never choose a separate ring angle.
-        // - Civil time jumps, such as daylight saving transitions, can still jump
-        //   the ring because the displayed civil time jumps too.
-        secondsSinceMidnight(date) {
-            return this.secondsWithinHMS(date.getHours(), date.getMinutes(), date.getSeconds());
+        civilSecondsWithinDay(date) {
+            return date.getHours() * 60 * 60
+                + date.getMinutes() * 60
+                + date.getSeconds()
+                + date.getMilliseconds() / 1000;
         },
         localCivilDayUtcMs(date) {
             // Date.UTC gives a stable serial number for the local calendar day.
@@ -230,7 +247,7 @@ function createClockApp() {
             const daysFromCivilZeroToMonday = 4;
             return this.localCivilDayUtcMs(date) / 1000
                 - daysFromCivilZeroToMonday * this.getSecondsInDay()
-                + this.secondsSinceMidnight(date);
+                + this.civilSecondsWithinDay(date)
         },
         rotationDegreesForSeconds(seconds) {
             return seconds * this.params.rotatingDialDegreesPerSecond;
@@ -256,26 +273,43 @@ function createClockApp() {
             const sin = Math.sin(angleRadians);
             return `matrix(${cos} ${sin} ${-sin} ${cos} 0 0)`;
         },
-        rotatingMarkerIndexAlignedWithFixedAngle(fixedMarkerAngleDegrees, rotatingMarkerSpacingDegrees, markerCount) {
-            const markerIndex = Math.round((fixedMarkerAngleDegrees - this.rotatingDialAngleDegrees) / rotatingMarkerSpacingDegrees);
+        rotatingMarkerIndexAlignedWithFixedAngle(fixedMarkerAngleDegrees, rotatingMarkerSpacingDegrees, markerCount, rotatingDialAngleDegrees) {
+            const markerIndex = Math.round((fixedMarkerAngleDegrees - rotatingDialAngleDegrees) / rotatingMarkerSpacingDegrees);
             return ((markerIndex % markerCount) + markerCount) % markerCount;
         },
         get alignedRotatingMinuteMarkerIndex() {
             return this.rotatingMarkerIndexAlignedWithFixedAngle(
                 this.time.minutes * this.params.fixedMinuteMarkerStepDegrees,
                 this.params.rotatingMinuteMarkerSpacingDegrees,
-                this.params.numberOfMarksForMinutesOnRotatingDial
+                this.params.numberOfMarksForMinutesOnRotatingDial,
+                this.rotatingDialAngleDegreesForDate(this.time.dateAtMinuteStart)
             );
         },
         get alignedRotatingHourMarkerIndex() {
             return this.rotatingMarkerIndexAlignedWithFixedAngle(
                 this.fixedHourMarkerAngleDegrees(this.time.hours % this.params.numberOfHours),
                 this.params.rotatingHourMarkerSpacingDegrees,
-                this.params.numberOfMarksForHoursOnRotatingDial
+                this.params.numberOfMarksForHoursOnRotatingDial,
+                this.rotatingDialAngleDegreesForDate(this.time.dateAtHourStart)
             );
         },
-        setOffsetForDate(date) {
-            this.time.offsetSeconds = (date.getTime() - this.time.currentDate.getTime()) / 1000;
+        setDisplayedDate(date) {
+            const displayedDate = new Date(date);
+            const dateAtMinuteStart = startOfMinute(displayedDate);
+            const dateAtHourStart = startOfHour(displayedDate);
+
+            this.time.date = displayedDate;
+            // Keep minute/hour-cadence dependents from invalidating on every second tick.
+            // A new Date object with the same timestamp is still a reactive assignment.
+            if (this.time.dateAtMinuteStart.getTime() !== dateAtMinuteStart.getTime()) {
+                this.time.dateAtMinuteStart = dateAtMinuteStart;
+            }
+            if (this.time.dateAtHourStart.getTime() !== dateAtHourStart.getTime()) {
+                this.time.dateAtHourStart = dateAtHourStart;
+            }
+        },
+        calculateDeltaSeconds(date1, date2) {
+            return (date1.getTime() - date2.getTime()) / 1000;
         },
         rotatingDialAngleDegreesForDate(date) {
             return this.rotationDegreesForSeconds(this.civilSeconds(date));
@@ -365,26 +399,30 @@ function createClockApp() {
             return (hourIndex - this.params.numberOfHours) * this.params.fixedHourMarkerStepDegrees;
         },
         updateClock() {
-            this.time.currentDate = new Date();
+            this.setDisplayedDate(new Date(Date.now() + this.offsetSeconds * 1000));
         },
         useCurrentTime() {
             this.runManualTimeChange(() => {
                 this.selectedTimeOption = "current";
-                this.time.offsetSeconds = 0;
+                this.offsetSeconds = 0;
+                this.updateClock();
             });
         },
         setMidnight() {
             this.runManualTimeChange(() => {
                 this.selectedTimeOption = "midnight";
-                const midnight = new Date(this.time.currentDate.getFullYear(), this.time.currentDate.getMonth(), this.time.currentDate.getDate());
-                this.setOffsetForDate(midnight);
+                const now = new Date();
+                const midnight = startOfDay(now);
+                this.offsetSeconds = this.calculateDeltaSeconds(midnight, now);
+                this.setDisplayedDate(midnight);
             });
         },
         setRandomTime() {
             this.runManualTimeChange(() => {
                 this.selectedTimeOption = "random";
                 const rotationPeriodSeconds = 360 / this.params.rotatingDialDegreesPerSecond;
-                this.time.offsetSeconds = Math.floor(Math.random() * rotationPeriodSeconds);
+                this.offsetSeconds = Math.floor(Math.random() * rotationPeriodSeconds);
+                this.updateClock();
             });
         },
         setParams(option) {

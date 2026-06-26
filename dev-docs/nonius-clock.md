@@ -44,3 +44,33 @@ This note tracks development notes for the Nonius clock.
 - Civil-time jumps:
   - Test a daylight saving transition in a timezone that observes DST.
   - Confirm the ring follows the displayed local civil time: it may jump at the missing or repeated civil hour, but it should not jump at unrelated day, week, or year boundaries.
+
+- SVG mutation performance:
+  - Start the site with `zola serve --interface 127.0.0.1 --port 1111 --force`.
+  - Open `/projects/nonius-clock/` and run this in DevTools Console:
+
+    ```js
+    window.__clockMutations = [];
+
+    const observer = new MutationObserver(records => {
+      const batch = records.map(record => {
+        const target = record.target;
+        const name = target.id || target.className?.baseVal || target.tagName;
+        return `${name}:${record.attributeName || record.type}`;
+      });
+      window.__clockMutations.push(batch);
+      console.log(batch.length, batch);
+    });
+
+    observer.observe(document.querySelector("#clockAndControls"), {
+      subtree: true,
+      attributes: true,
+      childList: true,
+      characterData: true
+    });
+    ```
+
+  - During ordinary one-second ticks, expect one mutation: `rotatingDial:transform`.
+  - At minute boundaries, expect the rotating ring plus minute highlight overlay transforms.
+  - At hour boundaries, expect the rotating ring plus minute and hour highlight overlay transforms.
+  - Stop observing with `observer.disconnect()`.

@@ -377,7 +377,7 @@
         font-weight: 800;
     }
 
-    .isMarkerMatching {
+    .isMarkerHighlighted {
         fill: var(--clock-highlight);
     }
 </style>
@@ -448,8 +448,12 @@
                 <g v-for="i in Array.from({length: 60}, (x, i) => i)"
                     :class="{minuteMarker: true, dividesByFive: (i % 5 === 0)}"
                     :transform="`rotate(${i * params.fixedMinuteMarkerStepDegrees} ${centerCoordX} ${centerCoordY})`">
-                    <use href="#fixedMinuteMarker" :class="{'fixedMinuteMarker': true, 'isMarkerMatching': visuals.highlightAlignedMarkers && (time.minutes === i)}"></use>
+                    <use href="#fixedMinuteMarker" class="fixedMinuteMarker"></use>
                 </g>
+                <use v-if="visuals.highlightAlignedMarkers"
+                    href="#fixedMinuteMarker"
+                    class="fixedMinuteMarker isMarkerHighlighted"
+                    :transform="`rotate(${time.minutes * params.fixedMinuteMarkerStepDegrees} ${centerCoordX} ${centerCoordY})`"></use>
             </g>
 
             <circle class="outerDialCircleStroke" :cx="centerCoordX" :cy="centerCoordY" :r="visuals.radiusOfOuterDial"></circle>
@@ -472,14 +476,27 @@
                 <use v-for="i in Array.from({length: params.numberOfMarksForMinutesOnRotatingDial}, (x, i) => i)"
                     href="#rotatingMinuteMarker"
                     :transform="`rotate(${i * params.rotatingMinuteMarkerSpacingDegrees} ${centerCoordX} ${centerCoordY})`"
-                    :class="{'rotatingMinuteMarker': true, 'isMarkerMatching': visuals.highlightAlignedMarkers && (alignedRotatingMinuteMarkerIndex === i)}">
+                    class="rotatingMinuteMarker">
                 </use>
+                <use v-if="visuals.highlightAlignedMarkers"
+                    href="#rotatingMinuteMarker"
+                    class="rotatingMinuteMarker isMarkerHighlighted"
+                    :transform="`rotate(${alignedRotatingMinuteMarkerIndex * params.rotatingMinuteMarkerSpacingDegrees} ${centerCoordX} ${centerCoordY})`"></use>
             </g>
             <g clip-path="url(#rotatingHourMarkerClipPath)">
-                <use v-for="i in Array.from({length: params.numberOfMarksForHoursOnRotatingDial}, (x, i) => i)"
-                    :href="i == 0 ? '#rotatingHourMarkerFirst' : '#rotatingHourMarker'"
+                <use href="#rotatingHourMarkerFirst"
+                    :transform="`rotate(0 ${centerCoordX} ${centerCoordY})`"
+                    :class="{'rotatingHourMarker': true, 'isFirstMarker': true, 'isWeekdayPointer': visuals.showWeekdayRing}">
+                </use>
+                <use v-for="i in Array.from({length: Math.max(0, params.numberOfMarksForHoursOnRotatingDial - 1)}, (x, i) => i + 1)"
+                    href="#rotatingHourMarker"
                     :transform="`rotate(${i * params.rotatingHourMarkerSpacingDegrees} ${centerCoordX} ${centerCoordY})`"
-                    :class="{'rotatingHourMarker': true, 'isFirstMarker': i == 0, 'isWeekdayPointer': visuals.showWeekdayRing && i == 0, 'isMarkerMatching': visuals.highlightAlignedMarkers && (alignedRotatingHourMarkerIndex === i)}">
+                    class="rotatingHourMarker">
+                </use>
+                <use v-if="visuals.highlightAlignedMarkers"
+                    href="#rotatingHourMarker"
+                    class="rotatingHourMarker isMarkerHighlighted"
+                    :transform="`rotate(${alignedRotatingHourMarkerIndex * params.rotatingHourMarkerSpacingDegrees} ${centerCoordX} ${centerCoordY})`">
                 </use>
             </g>
         </g>
@@ -489,8 +506,12 @@
             <g v-for="i in Array.from({length: params.numberOfHours}, (x, i) => i)"
                 class="hourMarker"
                 :transform="`rotate(${fixedHourMarkerAngleDegrees(i)} ${centerCoordX} ${centerCoordY})`">
-                <use href="#fixedHourMarker" :class="{'fixedHourMarker': true, 'isMarkerMatching': visuals.highlightAlignedMarkers && (time.hours % params.numberOfHours === i)}"></use>
+                <use href="#fixedHourMarker" class="fixedHourMarker"></use>
             </g>
+            <use v-if="visuals.highlightAlignedMarkers"
+                href="#fixedHourMarker"
+                class="fixedHourMarker isMarkerHighlighted"
+                :transform="`rotate(${fixedHourMarkerAngleDegrees(time.hours % params.numberOfHours)} ${centerCoordX} ${centerCoordY})`"></use>
         </g>
         <circle :cx="centerCoordX" :cy="centerCoordY" :r="visuals.radiusOfInnerFixedDial" class="rotatingDialInnerCircleStroke"></circle>
         <g id="innerHourDial">
