@@ -269,7 +269,7 @@
         --clock-ink: #073642;
         --clock-marker: #93a1a1;
         --clock-marker-strong: #657b83;
-        --clock-highlight: #dc322f;
+        --clock-highlight: #2c363a;
         --clock-weekday: #268bd2;
         --clock-weekday-separator: #859900;
         --clock-weekday-pointer: #b58900;
@@ -448,7 +448,7 @@
                 <g v-for="i in Array.from({length: 60}, (x, i) => i)"
                     :class="{minuteMarker: true, dividesByFive: (i % 5 === 0)}"
                     :transform="`rotate(${i * params.fixedMinuteMarkerStepDegrees} ${centerCoordX} ${centerCoordY})`">
-                    <use href="#fixedMinuteMarker" :class="{'fixedMinuteMarker': true, 'isMarkerMatching': visuals.highlightMatchingMarkers && (time.minutes === i)}"></use>
+                    <use href="#fixedMinuteMarker" :class="{'fixedMinuteMarker': true, 'isMarkerMatching': visuals.highlightAlignedMarkers && (time.minutes === i)}"></use>
                 </g>
             </g>
 
@@ -489,7 +489,7 @@
             <g v-for="i in Array.from({length: params.numberOfHours}, (x, i) => i)"
                 class="hourMarker"
                 :transform="`rotate(${fixedHourMarkerAngleDegrees(i)} ${centerCoordX} ${centerCoordY})`">
-                <use href="#fixedHourMarker" :class="{'fixedHourMarker': true, 'isMarkerMatching': visuals.highlightMatchingMarkers && (time.hours % params.numberOfHours === i)}"></use>
+                <use href="#fixedHourMarker" :class="{'fixedHourMarker': true, 'isMarkerMatching': visuals.highlightAlignedMarkers && (time.hours % params.numberOfHours === i)}"></use>
             </g>
         </g>
         <circle :cx="centerCoordX" :cy="centerCoordY" :r="visuals.radiusOfInnerFixedDial" class="rotatingDialInnerCircleStroke"></circle>
@@ -534,14 +534,6 @@
                 <summary>Advanced parameters</summary>
                 <div class="control-subsection">
                     <h5>General</h5>
-                    <div class="control-row">
-                        <label for="numberOfMarksForHoursOnRotatingDial">Rotating hour marks:</label>
-                        <input id="numberOfMarksForHoursOnRotatingDial" type="number" min="1" max="60" v-model="params.numberOfMarksForHoursOnRotatingDial">
-                    </div>
-                    <div class="control-row">
-                        <label for="numberOfMarksForMinutesOnRotatingDial">Rotating minute marks:</label>
-                        <input id="numberOfMarksForMinutesOnRotatingDial" type="number" disabled="true" v-model="params.numberOfMarksForMinutesOnRotatingDial">
-                    </div>
                     <div class="control-row choice-row">
                         <span class="labelForInputGroup">Direction:</span>
                         <div class="choice-grid">
@@ -549,6 +541,21 @@
                             <label class="choice"><input type="radio" v-model="params.isRotatingClockwise" :value="false" />counter-clockwise</label>
                         </div>
                     </div>
+                    <div class="control-row">
+                        <label for="highlightAlignedMarkers">Highlight alignment:</label>
+                        <input id="highlightAlignedMarkers" class="checkbox-control" type="checkbox" v-model="visuals.highlightAlignedMarkers"/>
+                    </div>
+                    <div class="control-row">
+                        <label for="showWeekdayRing">Weekday scale:</label>
+                        <input id="showWeekdayRing" class="checkbox-control" type="checkbox" v-model="visuals.showWeekdayRing"/>
+                    </div>
+                    <div class="control-row">
+                        <label>Rotation period:</label>
+                        <input disabled :value="(360 / Math.abs(params.rotatingDialDegreesPerHour)) + 'h'"/>
+                    </div>
+                </div>
+                <div class="control-subsection">
+                    <h5>Hour</h5>
                     <div class="control-row choice-row">
                         <span class="labelForInputGroup">Hours on dial:</span>
                         <div class="choice-grid">
@@ -557,20 +564,9 @@
                         </div>
                     </div>
                     <div class="control-row">
-                        <label for="highlightMatchingMarkers">Highlight matches:</label>
-                        <input id="highlightMatchingMarkers" class="checkbox-control" type="checkbox" v-model="visuals.highlightMatchingMarkers"/>
+                        <label for="numberOfMarksForHoursOnRotatingDial">Rotating hour marks:</label>
+                        <input id="numberOfMarksForHoursOnRotatingDial" type="number" min="1" max="60" v-model="params.numberOfMarksForHoursOnRotatingDial">
                     </div>
-                    <div class="control-row">
-                        <label for="showWeekdayRing">Weekday scale:</label>
-                        <input id="showWeekdayRing" class="checkbox-control" type="checkbox" v-model="visuals.showWeekdayRing"/>
-                    </div>
-                    <div class="control-row">
-                        <label>Rotation period:</label>
-                        <input type="number" disabled :value="params.numberOfMarksForHoursOnRotatingDial * params.numberOfHours"/>
-                    </div>
-                </div>
-                <div class="control-subsection">
-                    <h5>Hour</h5>
                     <div class="control-row choice-row">
                         <span class="labelForInputGroup">Spacing:</span>
                         <div class="choice-grid">
@@ -585,6 +581,10 @@
                 </div>
                 <div class="control-subsection">
                     <h5>Minute</h5>
+                    <div class="control-row">
+                        <label for="numberOfMarksForMinutesOnRotatingDial">Rotating minute marks:</label>
+                        <input id="numberOfMarksForMinutesOnRotatingDial" type="number" disabled="true" v-model="params.numberOfMarksForMinutesOnRotatingDial">
+                    </div>
                     <div class="control-row choice-row">
                         <span class="labelForInputGroup">Spacing:</span>
                         <div class="choice-grid">

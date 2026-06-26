@@ -57,6 +57,9 @@ function createClockApp() {
                 }
             },
             
+            get rotatingDialDegreesPerHour() {
+                return this.rotatingDialDegreesPerMinute * 60;
+            },
             get rotatingDialDegreesPerMinute() {
                 const rotatingDialDegreesPerMinuteMagnitude = this.rotatingMinuteMarkerSpacingDegrees / 60;
                 return this.isRotatingClockwise ? rotatingDialDegreesPerMinuteMagnitude : -rotatingDialDegreesPerMinuteMagnitude;
@@ -72,7 +75,7 @@ function createClockApp() {
             minuteLabelEvery: 5,
             minuteLabel59: false,
             minuteMarkerThicknessFactor: 10,
-            highlightMatchingMarkers: true,
+            highlightAlignedMarkers: true,
             showWeekdayRing: false,
             get fixedMinuteMarkerLength() {
                 return this.radiusOfOuterDial - this.radiusOfRotatingDial;
