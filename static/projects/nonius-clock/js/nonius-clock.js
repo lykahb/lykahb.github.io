@@ -238,6 +238,24 @@ function createClockApp() {
         rotationSpanDegreesForSeconds(seconds) {
             return Math.abs(this.rotationDegreesForSeconds(seconds));
         },
+        rotationTransform(angleDegrees) {
+            // Keep the logical angle unbounded and civil-time based, but do not
+            // pass huge values such as rotate(-2970144.3) to the browser. When
+            // CSS transitions are applied to SVG's transform presentation
+            // attribute, Chromium has produced visibly imprecise matrices for
+            // those large rotate() values. Computing the small equivalent matrix
+            // here preserves marker alignment.
+            //
+            // This does not reintroduce the old week-boundary discontinuity:
+            // rotatingDialAngleDegrees still advances continuously from
+            // civilSeconds(). Only the final drawing transform is reduced modulo
+            // one turn, and a rotation matrix has no 359deg -> 0deg jump for CSS
+            // to animate across.
+            const angleRadians = (angleDegrees % 360) * Math.PI / 180;
+            const cos = Math.cos(angleRadians);
+            const sin = Math.sin(angleRadians);
+            return `matrix(${cos} ${sin} ${-sin} ${cos} 0 0)`;
+        },
         rotatingMarkerIndexAlignedWithFixedAngle(fixedMarkerAngleDegrees, rotatingMarkerSpacingDegrees, markerCount) {
             const markerIndex = Math.round((fixedMarkerAngleDegrees - this.rotatingDialAngleDegrees) / rotatingMarkerSpacingDegrees);
             return ((markerIndex % markerCount) + markerCount) % markerCount;
