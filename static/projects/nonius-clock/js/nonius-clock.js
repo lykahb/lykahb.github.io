@@ -191,12 +191,6 @@ function createClockApp() {
                 this.setOffsetForDate(date);
             });
         },
-        formatDebugNumber(value, fractionDigits) {
-            return Number(value).toLocaleString("en-US", {
-                maximumFractionDigits: fractionDigits,
-                minimumFractionDigits: fractionDigits
-            });
-        },
         // methods
         getSecondsInDay() {
             return 24 * 60 * 60;

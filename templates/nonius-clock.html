@@ -148,34 +148,6 @@
         white-space: normal;
     }
 
-    .debug-grid {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 0.8rem;
-        margin: 0;
-    }
-
-    .debug-grid>div {
-        display: grid;
-        gap: 0.2rem;
-        min-width: 0;
-    }
-
-    .debug-grid dt {
-        color: #65706a;
-        font-size: 1.1rem;
-        line-height: 1.2;
-    }
-
-    .debug-grid dd {
-        margin: 0;
-        color: #17201c;
-        font-family: ui-monospace, "SFMono-Regular", "SF Mono", Consolas, monospace;
-        font-size: 1.25rem;
-        line-height: 1.25;
-        overflow-wrap: anywhere;
-    }
-
     #controls input[type='number'],
     #controls input[type='datetime-local'] {
         width: 100%;
@@ -287,8 +259,7 @@
         }
 
         .time-actions,
-        .choice-grid,
-        .debug-grid {
+        .choice-grid {
             grid-template-columns: 1fr;
         }
     }
@@ -557,20 +528,6 @@
                     <button @click="setParams('chaoticHoursMinuteGap')" :class="{isSelectedOption: isSelectedParamPreset('chaoticHoursMinuteGap')}" :aria-pressed="isSelectedParamPreset('chaoticHoursMinuteGap')" aria-label="Compact minutes preset" title="Compact minutes preset">Compact minutes</button>
                     <button @click="setParams('oneWeekRotation')" :class="{isSelectedOption: isSelectedParamPreset('oneWeekRotation')}" :aria-pressed="isSelectedParamPreset('oneWeekRotation')" aria-label="Week rotation preset" title="Week rotation preset">Week rotation</button>
                 </div>
-            </section>
-
-            <section class="control-section">
-                <h4>Debug</h4>
-                <dl class="debug-grid">
-                    <div>
-                        <dt>Offset</dt>
-                        <dd><output>{{ formatDebugNumber(time.offsetSeconds, 3) }} s</output></dd>
-                    </div>
-                    <div>
-                        <dt>Target angle</dt>
-                        <dd><output>{{ formatDebugNumber(rotatingDialAngleDegrees, 3) }} deg</output></dd>
-                    </div>
-                </dl>
             </section>
 
             <details class="control-section advanced-parameters">
