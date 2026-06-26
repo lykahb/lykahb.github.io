@@ -238,6 +238,24 @@ function createClockApp() {
         rotationSpanDegreesForSeconds(seconds) {
             return Math.abs(this.rotationDegreesForSeconds(seconds));
         },
+        rotatingMarkerIndexAlignedWithFixedAngle(fixedMarkerAngleDegrees, rotatingMarkerSpacingDegrees, markerCount) {
+            const markerIndex = Math.round((fixedMarkerAngleDegrees - this.rotatingDialAngleDegrees) / rotatingMarkerSpacingDegrees);
+            return ((markerIndex % markerCount) + markerCount) % markerCount;
+        },
+        get alignedRotatingMinuteMarkerIndex() {
+            return this.rotatingMarkerIndexAlignedWithFixedAngle(
+                this.time.minutes * this.params.fixedMinuteMarkerStepDegrees,
+                this.params.rotatingMinuteMarkerSpacingDegrees,
+                this.params.numberOfMarksForMinutesOnRotatingDial
+            );
+        },
+        get alignedRotatingHourMarkerIndex() {
+            return this.rotatingMarkerIndexAlignedWithFixedAngle(
+                this.fixedHourMarkerAngleDegrees(this.time.hours % this.params.numberOfHours),
+                this.params.rotatingHourMarkerSpacingDegrees,
+                this.params.numberOfMarksForHoursOnRotatingDial
+            );
+        },
         setOffsetForDate(date) {
             this.time.offsetSeconds = (date.getTime() - this.time.currentDate.getTime()) / 1000;
         },

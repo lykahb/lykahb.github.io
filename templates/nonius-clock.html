@@ -472,14 +472,14 @@
                 <use v-for="i in Array.from({length: params.numberOfMarksForMinutesOnRotatingDial}, (x, i) => i)"
                     href="#rotatingMinuteMarker"
                     :transform="`rotate(${i * params.rotatingMinuteMarkerSpacingDegrees} ${centerCoordX} ${centerCoordY})`"
-                    class="rotatingMinuteMarker">
+                    :class="{'rotatingMinuteMarker': true, 'isMarkerMatching': visuals.highlightAlignedMarkers && (alignedRotatingMinuteMarkerIndex === i)}">
                 </use>
             </g>
             <g clip-path="url(#rotatingHourMarkerClipPath)">
                 <use v-for="i in Array.from({length: params.numberOfMarksForHoursOnRotatingDial}, (x, i) => i)"
                     :href="i == 0 ? '#rotatingHourMarkerFirst' : '#rotatingHourMarker'"
                     :transform="`rotate(${i * params.rotatingHourMarkerSpacingDegrees} ${centerCoordX} ${centerCoordY})`"
-                    :class="{'rotatingHourMarker': true, 'isFirstMarker': i == 0, 'isWeekdayPointer': visuals.showWeekdayRing && i == 0}">
+                    :class="{'rotatingHourMarker': true, 'isFirstMarker': i == 0, 'isWeekdayPointer': visuals.showWeekdayRing && i == 0, 'isMarkerMatching': visuals.highlightAlignedMarkers && (alignedRotatingHourMarkerIndex === i)}">
                 </use>
             </g>
         </g>
