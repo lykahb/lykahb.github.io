@@ -48,25 +48,24 @@ template = "index.html"
 <section class="section-intro">
   <h2>From exploration to shipped software.</h2>
   <p>
-    My open-source work ranges from a Haskell ORM based on graduate research, to raw USB protocol tooling,
-    to interactive browser demos. The common thread is careful modeling and direct usefulness.
+    I enjoy moving across domains, learning what matters, and building something that works.
   </p>
   <a class="button-link secondary" href="/projects">Explore all projects</a>
 </section>
 
 <section class="work-preview" aria-label="Project highlights">
-  <article>
+  <a class="work-preview-card" href="/projects#groundhog">
     <h3>Groundhog</h3>
     <p>Object-relational mapping for Haskell, informed by research on algebraic data types in relational databases.</p>
-  </article>
-  <article>
+  </a>
+  <a class="work-preview-card" href="/projects#neotools">
     <h3>Neotools</h3>
     <p>A command-line utility for AlphaSmart NEO devices, built around a low-level USB protocol.</p>
-  </article>
-  <article>
+  </a>
+  <a class="work-preview-card" href="/projects#trail-chess">
     <h3>Trail Chess</h3>
     <p>A playable chess variant combining board-game rules, path constraints, and simple AI behavior.</p>
-  </article>
+  </a>
 </section>
 
 <section class="personal-note">

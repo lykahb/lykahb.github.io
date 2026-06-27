@@ -354,7 +354,7 @@ ul {
 .profile-panel {
   display: grid;
   gap: 1.8rem;
-  align-self: stretch;
+  align-self: center;
   align-content: start;
   padding: 1.2rem;
   border: 1px solid var(--line);
@@ -392,6 +392,7 @@ ul {
 }
 
 .profile-panel p:last-child {
+  margin-bottom: 0;
   color: var(--muted);
   font-size: 1.5rem;
 }
@@ -404,7 +405,7 @@ ul {
 }
 
 .signal-grid article,
-.work-preview article,
+.work-preview-card,
 .project-card {
   border: 1px solid var(--line);
   border-radius: var(--radius);
@@ -417,7 +418,7 @@ ul {
 }
 
 .signal-grid article:hover,
-.work-preview article:hover,
+.work-preview-card:hover,
 .project-card:hover {
   border-color: rgba(35, 120, 105, 0.28);
   background-color: rgba(255, 255, 255, 0.9);
@@ -426,22 +427,22 @@ ul {
 }
 
 .signal-grid article,
-.work-preview article {
+.work-preview-card {
   animation: card-reveal 640ms var(--ease-out) both;
 }
 
 .signal-grid article:nth-child(1),
-.work-preview article:nth-child(1) {
+.work-preview-card:nth-child(1) {
   animation-delay: 120ms;
 }
 
 .signal-grid article:nth-child(2),
-.work-preview article:nth-child(2) {
+.work-preview-card:nth-child(2) {
   animation-delay: 200ms;
 }
 
 .signal-grid article:nth-child(3),
-.work-preview article:nth-child(3) {
+.work-preview-card:nth-child(3) {
   animation-delay: 280ms;
 }
 
@@ -492,8 +493,11 @@ ul {
   margin-top: 2rem;
 }
 
-.work-preview article {
+.work-preview-card {
+  display: block;
   padding: 2.2rem;
+  color: inherit;
+  text-decoration: none;
 }
 
 .work-preview h3 {
@@ -521,6 +525,7 @@ ul {
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 3rem;
   align-items: start;
+  scroll-margin-top: 9.6rem;
   padding: clamp(2.2rem, 4vw, 3.2rem);
 }
 
@@ -602,7 +607,7 @@ hr {
 
 @supports (animation-timeline: view()) {
   .signal-grid article,
-  .work-preview article {
+  .work-preview-card {
     animation-name: card-reveal;
     animation-duration: 1s;
     animation-timing-function: var(--ease-out);
@@ -613,12 +618,12 @@ hr {
   }
 
   .signal-grid article:nth-child(2),
-  .work-preview article:nth-child(2) {
+  .work-preview-card:nth-child(2) {
     animation-range: entry 62% entry 120%;
   }
 
   .signal-grid article:nth-child(3),
-  .work-preview article:nth-child(3) {
+  .work-preview-card:nth-child(3) {
     animation-range: entry 70% entry 128%;
   }
 }
@@ -716,7 +721,7 @@ hr {
   .project-action:hover,
   .profile-panel:hover,
   .signal-grid article:hover,
-  .work-preview article:hover,
+  .work-preview-card:hover,
   .project-card:hover,
   .profile-panel:hover .profile-picture {
     transform: none;
