@@ -3,5 +3,7 @@ _cache
 .idea/
 .vscode/
 node_modules/
+/playwright-report/
+/test-results/
 /docs/
 /public/
