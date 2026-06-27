@@ -1,5 +1,5 @@
 :root {
-    --board-size: 320px;
+    --board-size: clamp(320px, 48vw, 540px);
 }
 
 .cg-wrap, .board-container {
@@ -10,35 +10,57 @@
 
 .gameplay {
     display: grid;
-    grid-gap: 1em;
-    align-items: center;
-    justify-items: center;
-    grid-template-rows: 1fr min-content;
+    gap: 2rem;
+    align-items: start;
+    justify-items: stretch;
+    max-width: calc(var(--board-size) + 36rem);
+    margin-block: 3.2rem 2rem;
     grid-template-areas:
-        'board'
-        'board'
-        'pocket-top'
-        'pocket-bottom'
-        'controls';
-}
-
-@media (min-width: 600px) {
-    .gameplay {
-        grid-template-areas:
-        'board controls'
-        'board pocket-top'
-        'board pocket-bottom';
-        grid-template-columns: min-content 1fr;
-    }
-    .pocket, .controls {
-        justify-self: left;
-    }
-
+        'board panel';
+    grid-template-columns: var(--board-size) minmax(28rem, 34rem);
 }
 
 .board-container {
     grid-area: board;
-    box-shadow: 0 2px 2px 0 rgba(0,0,0,0.14),0 3px 1px -2px rgba(0,0,0,0.2),0 1px 5px 0 rgba(0,0,0,0.12);
+    overflow: hidden;
+    border: 1px solid rgba(23, 32, 28, 0.16);
+    border-radius: 8px;
+    box-shadow: 0 18px 42px rgba(23, 32, 28, 0.12);
+}
+
+.trailchess-panel {
+    display: grid;
+    grid-area: panel;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1.6rem;
+    min-width: 0;
+    padding: 1.8rem;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: rgba(255, 255, 255, 0.78);
+    box-shadow: 0 14px 34px rgba(23, 32, 28, 0.08);
+}
+
+.trailchess-status {
+    display: grid;
+    gap: 0.2rem;
+    padding-bottom: 1.4rem;
+    border-bottom: 1px solid var(--line);
+}
+
+.trailchess-status span,
+.reserve-group > span {
+    color: var(--muted);
+    font-size: 1.2rem;
+    font-weight: 760;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.trailchess-status strong {
+    color: var(--ink);
+    font-size: 2.3rem;
+    line-height: 1.15;
 }
 
 .pocket-top {
@@ -50,11 +72,192 @@
 }
 
 .controls {
-    grid-area: controls;
+    display: grid;
+    gap: 1.4rem;
+    grid-area: auto;
+    min-width: 0;
+    width: 100%;
+}
+
+.controls fieldset {
+    min-width: 0;
+    min-inline-size: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+}
+
+.controls legend {
+    margin-bottom: 0.7rem;
+    color: var(--ink);
+    font-size: 1.4rem;
+    font-weight: 760;
+}
+
+.player-options {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    width: 100%;
+    overflow: hidden;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: rgba(238, 243, 238, 0.75);
+}
+
+.player-options label {
+    min-width: 0;
+}
+
+.player-options input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    clip: rect(0 0 0 0);
+    clip-path: inset(50%);
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+.player-options span {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 4rem;
+    padding: 0.7rem 0.8rem;
+    color: #34433b;
+    font-size: 1.35rem;
+    font-weight: 720;
+    line-height: 1.1;
+    text-align: center;
+    cursor: pointer;
+    transition:
+        background-color 180ms ease,
+        color 180ms ease,
+        box-shadow 180ms ease;
+}
+
+.player-options label + label span {
+    border-left: 1px solid var(--line);
+}
+
+.player-options input:checked + span {
+    background: var(--accent);
+    color: #fff;
+    box-shadow: 0 8px 18px rgba(21, 88, 77, 0.18);
+}
+
+.player-options input:focus-visible + span {
+    outline: 2px solid var(--copper);
+    outline-offset: -2px;
+}
+
+.controls .reset {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 4.4rem;
+    width: 100%;
+    margin: 0.2rem 0 0;
+    padding: 0.9rem 1.4rem;
+    border: 1px solid var(--accent);
+    border-radius: var(--radius);
+    background: var(--accent);
+    color: white;
+    font: inherit;
+    font-size: 1.45rem;
+    font-weight: 760;
+    line-height: 1.1;
+    cursor: pointer;
+    transition:
+        transform 180ms var(--ease-out),
+        border-color 180ms ease,
+        background-color 180ms ease,
+        box-shadow 180ms ease;
+}
+
+.controls .reset:hover {
+    border-color: var(--accent-dark);
+    background: var(--accent-dark);
+    transform: translateY(-1px);
+    box-shadow: 0 10px 24px rgba(21, 88, 77, 0.18);
+}
+
+.reserve-panel {
+    display: grid;
+    gap: 1.2rem;
+    min-width: 0;
+    width: 100%;
+    padding-top: 0.2rem;
+}
+
+.reserve-group {
+    display: grid;
+    gap: 0.6rem;
+    min-width: 0;
+    width: 100%;
 }
 
 .description {
     grid-area: description;
+}
+
+.trailchess-page > p {
+    color: var(--muted);
+    font-size: 1.8rem;
+}
+
+.trailchess-quickstart {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1.4rem;
+    max-width: calc(var(--board-size) + 36rem);
+    margin-block: 2.4rem 5.6rem;
+}
+
+.trailchess-quickstart article {
+    padding: 1.8rem;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: rgba(255, 255, 255, 0.72);
+}
+
+.trailchess-quickstart h2 {
+    margin-bottom: 0.7rem;
+    font-size: 1.9rem;
+}
+
+.trailchess-quickstart p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 1.45rem;
+    line-height: 1.45;
+}
+
+.trailchess-page .pocket {
+    display: flex;
+    grid-area: auto;
+    width: max-content;
+    max-width: 100%;
+    overflow: hidden;
+    border: 1px solid rgba(72, 100, 122, 0.2);
+    border-radius: 6px;
+    background: rgba(238, 243, 238, 0.92);
+    box-shadow: none;
+}
+
+.trailchess-page .pocket > piece:hover {
+    background-color: rgba(35, 120, 105, 0.12);
+}
+
+.trailchess-page .pocket piece::after {
+    background: var(--copper);
+    box-shadow: none;
+    text-shadow: none !important;
+}
+
+.trailchess-page .reserve-panel .pocket piece {
+    width: 5.2rem;
+    height: 5.2rem;
 }
 
 .cg-trails {
@@ -85,4 +288,31 @@
 
 .cg-trails .trail-choose {
     stroke-dasharray: 0 4%;
+}
+
+@media (max-width: 860px) {
+    .gameplay {
+        grid-template-areas:
+            'board'
+            'panel';
+        grid-template-columns: minmax(0, 1fr);
+        max-width: var(--board-size);
+        margin-inline: auto;
+    }
+
+    .board-container,
+    .cg-wrap {
+        justify-self: center;
+    }
+
+    .trailchess-panel {
+        width: 100%;
+    }
+
+    .trailchess-quickstart {
+        grid-template-columns: 1fr;
+        max-width: var(--board-size);
+        margin-inline: auto;
+        margin-bottom: 4.8rem;
+    }
 }

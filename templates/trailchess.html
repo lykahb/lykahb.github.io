@@ -9,63 +9,97 @@
 <link rel="stylesheet" href="/projects/trailchess/css/brown.css">
 <link rel="stylesheet" href="/projects/trailchess/css/cburnett.css">
 <link rel="stylesheet" href="/projects/trailchess/css/trailchess.css">
-<section class="project-demo-page">
+<section class="project-demo-page trailchess-page">
     <h1>Trail Chess</h1>
     <div class="gameplay">
         <div class="board-container brown merida is2d">
             <div class="cg-wrap" id="trailchess">
             </div>
         </div>
-        <div class="pocket is2d pocket-top usable">
-            <piece class="queen white" data-role="queen" data-color="white" data-count="1"></piece>
-            <piece class="rook white" data-role="rook" data-color="white" data-count="2"></piece>
-            <piece class="bishop white" data-role="bishop" data-color="white" data-count="2"></piece>
-            <piece class="knight white" data-role="knight" data-color="white" data-count="2"></piece>
-            <piece class="pawn white" data-role="pawn" data-color="white" data-count="8"></piece>
-        </div>
-        <div class="pocket is2d pocket-bottom usable">
-            <piece class="queen black" data-role="queen" data-color="black" data-count="1"></piece>
-            <piece class="rook black" data-role="rook" data-color="black" data-count="2"></piece>
-            <piece class="bishop black" data-role="bishop" data-color="black" data-count="2"></piece>
-            <piece class="knight black" data-role="knight" data-color="black" data-count="2"></piece>
-            <piece class="pawn black" data-role="pawn" data-color="black" data-count="8"></piece>
-        </div>
-        <form name="controls" class="controls">
-            <fieldset>
-                <legend>White</legend>
-                <div>
-                    <label>
-                        <input type="radio" name="whitePlayer" value="ai">AI
-                    </label>
-                    <label>
-                        <input type="radio" name="whitePlayer" value="human">Human
-                    </label>
-                    <label>
-                        <input type="radio" name="whitePlayer" value="random">Random
-                    </label>
+        <aside class="trailchess-panel" aria-label="Game controls">
+            <div class="trailchess-status" aria-live="polite">
+                <span>Current mode</span>
+                <strong data-trailchess-status>AI vs AI</strong>
+            </div>
+            <form name="controls" class="controls">
+                <fieldset>
+                    <legend>White</legend>
+                    <div class="player-options">
+                        <label>
+                            <input type="radio" name="whitePlayer" value="ai" checked>
+                            <span>AI</span>
+                        </label>
+                        <label>
+                            <input type="radio" name="whitePlayer" value="human">
+                            <span>Human</span>
+                        </label>
+                        <label>
+                            <input type="radio" name="whitePlayer" value="random">
+                            <span>Random</span>
+                        </label>
+                    </div>
+                </fieldset>
+                <fieldset>
+                    <legend>Black</legend>
+                    <div class="player-options">
+                        <label>
+                            <input type="radio" name="blackPlayer" value="ai" checked>
+                            <span>AI</span>
+                        </label>
+                        <label>
+                            <input type="radio" name="blackPlayer" value="human">
+                            <span>Human</span>
+                        </label>
+                        <label>
+                            <input type="radio" name="blackPlayer" value="random">
+                            <span>Random</span>
+                        </label>
+                    </div>
+                </fieldset>
+                <button class="reset" type="button">New Game</button>
+            </form>
+            <div class="reserve-panel" aria-label="Piece reserves">
+                <div class="reserve-group">
+                    <span>White reserve</span>
+                    <div class="pocket is2d pocket-top usable">
+                        <piece class="queen white" data-role="queen" data-color="white" data-count="1"></piece>
+                        <piece class="rook white" data-role="rook" data-color="white" data-count="2"></piece>
+                        <piece class="bishop white" data-role="bishop" data-color="white" data-count="2"></piece>
+                        <piece class="knight white" data-role="knight" data-color="white" data-count="2"></piece>
+                        <piece class="pawn white" data-role="pawn" data-color="white" data-count="8"></piece>
+                    </div>
                 </div>
-            </fieldset>
-            <fieldset>
-                <legend>Black</legend>
-                <div>
-                    <label>
-                        <input type="radio" name="blackPlayer" value="ai" checked>AI
-                    </label>
-                    <label>
-                        <input type="radio" name="blackPlayer" value="human">Human
-                    </label>
-                    <label>
-                        <input type="radio" name="blackPlayer" value="random">Random
-                    </label>
+                <div class="reserve-group">
+                    <span>Black reserve</span>
+                    <div class="pocket is2d pocket-bottom usable">
+                        <piece class="queen black" data-role="queen" data-color="black" data-count="1"></piece>
+                        <piece class="rook black" data-role="rook" data-color="black" data-count="2"></piece>
+                        <piece class="bishop black" data-role="bishop" data-color="black" data-count="2"></piece>
+                        <piece class="knight black" data-role="knight" data-color="black" data-count="2"></piece>
+                        <piece class="pawn black" data-role="pawn" data-color="black" data-count="8"></piece>
+                    </div>
                 </div>
-            </fieldset>
-            <button class="reset">Reset</button>
-        </form>
+            </div>
+        </aside>
     </div>
 
     <p>
-        Drag a white piece on the board to start.
+        AI vs AI starts automatically. Switch either side to Human to play.
     </p>
+    <section class="trailchess-quickstart" aria-label="How Trail Chess works">
+        <article>
+            <h2>Watch</h2>
+            <p>Let the AI players reveal the shape of the game before taking a side.</p>
+        </article>
+        <article>
+            <h2>Place</h2>
+            <p>Drop a reserve piece onto any square without a trail, then move it.</p>
+        </article>
+        <article>
+            <h2>Cut</h2>
+            <p>Use movement paths to shorten opposing trails and capture pieces.</p>
+        </article>
+    </section>
     <div class="description">
         <h2>Rules</h2>
         <p>
@@ -139,6 +173,19 @@
 </section>
 <script src="/projects/trailchess/js/trailchess.js"></script>
 <script>
-    TrailChess.run(document.getElementById('trailchess'));
+    const trailChessElement = document.getElementById('trailchess');
+    const trailChessStatus = document.querySelector('[data-trailchess-status]');
+    const trailChessControls = document.forms.controls;
+    const playerLabel = value => value === 'ai' ? 'AI' : value === 'random' ? 'Random' : 'Human';
+    const updateTrailChessStatus = () => {
+        const white = playerLabel(trailChessControls.elements.whitePlayer.value);
+        const black = playerLabel(trailChessControls.elements.blackPlayer.value);
+        trailChessStatus.textContent = `${white} vs ${black}`;
+    };
+
+    TrailChess.run(trailChessElement);
+    trailChessControls.addEventListener('change', updateTrailChessStatus);
+    trailChessElement.addEventListener('trailchessStage', updateTrailChessStatus);
+    updateTrailChessStatus();
 </script>
 {% endblock %}
