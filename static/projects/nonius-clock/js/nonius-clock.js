@@ -431,8 +431,9 @@ function createClockApp() {
                 ${closePath ? "z" : ""}`;
         },
         ringClipPath(innerRadius, outerRadius) {
-            const inner = Math.max(0, Math.min(innerRadius, outerRadius));
-            const outer = Math.max(innerRadius, outerRadius);
+            const RING_CLIP_BLEED = 0.1;  // A tiny overlap prevents blank pixels from antialising
+            const inner = Math.max(0, Math.min(innerRadius, outerRadius) - RING_CLIP_BLEED);
+            const outer = Math.max(innerRadius, outerRadius) + RING_CLIP_BLEED;
             const circlePath = (radius, sweepFlag) => `M${this.centerCoordX},${this.centerCoordY - radius}
                 A${radius},${radius} 0 1 ${sweepFlag} ${this.centerCoordX},${this.centerCoordY + radius}
                 A${radius},${radius} 0 1 ${sweepFlag} ${this.centerCoordX},${this.centerCoordY - radius}`;
