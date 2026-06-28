@@ -17,6 +17,56 @@
 // - Civil time jumps, such as daylight saving transitions, can still jump
 //   the ring because the displayed civil time jumps too.
 
+const SECONDS_PER_DAY = 24 * 60 * 60;
+const DAYS_FROM_CIVIL_ZERO_TO_MONDAY = 4;
+const PHI = 1.61803398875; // golden ratio
+const MARKER_OVERSHOOT = 4;
+
+const WEEKDAYS = [
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+    "Sunday"
+];
+
+const PARAM_PRESETS = {
+    chaoticHours: {
+        numberOfMarksForHoursOnRotatingDial: 5,
+        isRotatingClockwise: false,
+        areFixedHoursShorter: false,
+        areFixedMinutesShorter: true,
+        minuteLabelEvery: 5,
+        minuteLabel59: true
+    },
+    chaoticMinutes: {
+        numberOfMarksForHoursOnRotatingDial: 1,
+        isRotatingClockwise: true,
+        areFixedHoursShorter: false,
+        areFixedMinutesShorter: false,
+        minuteLabelEvery: 1,
+        minuteLabel59: false
+    },
+    chaoticHoursMinuteGap: {
+        numberOfMarksForHoursOnRotatingDial: 6,
+        isRotatingClockwise: true,
+        areFixedHoursShorter: true,
+        areFixedMinutesShorter: false,
+        minuteLabelEvery: 5,
+        minuteLabel59: true
+    },
+    oneWeekRotation: {
+        numberOfMarksForHoursOnRotatingDial: 14,
+        isRotatingClockwise: true,
+        areFixedHoursShorter: false,
+        areFixedMinutesShorter: false,
+        minuteLabelEvery: 5,
+        minuteLabel59: true
+    }
+};
+
 function startOfMinute(date) {
     const dateAtMinuteStart = new Date(date);
     dateAtMinuteStart.setSeconds(0, 0);
@@ -35,27 +85,93 @@ function startOfDay(date) {
     return dateAtDayStart;
 }
 
+function formatDateTimeInputValue(date) {
+    const pad = value => String(value).padStart(2, "0");
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
+        + `T${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+}
+
+function validateSpacingMultiple(value, paramName) {
+    if (!Number.isInteger(value) || value < 1) {
+        throw new Error(`${paramName} must be an integer greater than or equal to 1`);
+    }
+    return value;
+}
+
+function fixedMarkerStepDegrees(spacingMultiple, spacingMultipleParamName, baseSpacingDegrees, alignmentSpacingDegrees, isShorter, isRotatingClockwise) {
+    const fixedMarkerSpacingDegrees = validateSpacingMultiple(spacingMultiple, spacingMultipleParamName) * baseSpacingDegrees
+        + (isShorter ? -alignmentSpacingDegrees : alignmentSpacingDegrees);
+    const direction = isRotatingClockwise ? 1 : -1;
+    return direction * (isShorter ? -fixedMarkerSpacingDegrees : fixedMarkerSpacingDegrees);
+}
+
+function calculateDeltaSeconds(date1, date2) {
+    return (date1.getTime() - date2.getTime()) / 1000;
+}
+
+function civilSecondsWithinDay(date) {
+    return date.getHours() * 60 * 60
+        + date.getMinutes() * 60
+        + date.getSeconds()
+        + date.getMilliseconds() / 1000;
+}
+
+function localCivilDayUtcMs(date) {
+    // Date.UTC gives a stable serial number for the local calendar day.
+    // It deliberately ignores timezone offsets, so every civil date is
+    // exactly one nominal 24h day after the previous civil date.
+    return Date.UTC(date.getFullYear(), date.getMonth(), date.getDate());
+}
+
+function civilSeconds(date) {
+    // localCivilDayUtcMs() has day zero on 1970-01-01, which was Thursday.
+    // Subtract four nominal days so the weekly phase starts on Monday,
+    // matching the weekday scale's Monday-at-12-o'clock layout.
+    return localCivilDayUtcMs(date) / 1000
+        - DAYS_FROM_CIVIL_ZERO_TO_MONDAY * SECONDS_PER_DAY
+        + civilSecondsWithinDay(date);
+}
+
+function rotationTransform(angleDegrees) {
+    // Keep the logical angle unbounded and civil-time based, but do not
+    // pass huge values such as rotate(-2970144.3) to the browser. When
+    // CSS transitions are applied to SVG's transform presentation
+    // attribute, Chromium has produced visibly imprecise matrices for
+    // those large rotate() values. Computing the small equivalent matrix
+    // here preserves marker alignment.
+    //
+    // This does not reintroduce the old week-boundary discontinuity:
+    // rotatingDialAngleDegrees still advances continuously from
+    // civilSeconds(). Only the final drawing transform is reduced modulo
+    // one turn, and a rotation matrix has no 359deg -> 0deg jump for CSS
+    // to animate across.
+    const angleRadians = (angleDegrees % 360) * Math.PI / 180;
+    const cos = Math.cos(angleRadians);
+    const sin = Math.sin(angleRadians);
+    return `matrix(${cos} ${sin} ${-sin} ${cos} 0 0)`;
+}
+
+function rotatingMarkerIndexAlignedWithFixedAngle(fixedMarkerAngleDegrees, rotatingMarkerSpacingDegrees, markerCount, rotatingDialAngleDegrees) {
+    const markerIndex = Math.round((fixedMarkerAngleDegrees - rotatingDialAngleDegrees) / rotatingMarkerSpacingDegrees);
+    return ((markerIndex % markerCount) + markerCount) % markerCount;
+}
+
 function createClockApp() {
     const initialDate = new Date();
 
     return PetiteVue.createApp({
+        // Reactive state.
         params: {
-            get numberOfMarksForMinutesOnRotatingDial() {
-                return this.numberOfMarksForHoursOnRotatingDial * this.numberOfHours;
-            },
             numberOfMarksForHoursOnRotatingDial: 5,
             isRotatingClockwise: true,
             areFixedMinutesShorter: true,
             areFixedHoursShorter: true,
-            isGMT: false,
             numberOfHours: 12,
             spacingMultipleForFixedHourMarks: 1,
             spacingMultipleForFixedMinuteMarks: 1,
-            validateSpacingMultiple(value, paramName) {
-                if (!Number.isInteger(value) || value < 1) {
-                    throw new Error(`${paramName} must be an integer greater than or equal to 1`);
-                }
-                return value;
+
+            get numberOfMarksForMinutesOnRotatingDial() {
+                return this.numberOfMarksForHoursOnRotatingDial * this.numberOfHours;
             },
             get rotatingMinuteMarkerSpacingDegrees() {
                 return 360 / this.numberOfMarksForMinutesOnRotatingDial;
@@ -67,33 +183,21 @@ function createClockApp() {
             // wraps non-12 hour marks backward from 12 so the larger gap lands between 12 and 1.
             get fixedHourMarkerStepDegrees() {
                 // Each hour the next minute mark aligns.
-                const spacingMultiple = this.validateSpacingMultiple(this.spacingMultipleForFixedHourMarks, "spacingMultipleForFixedHourMarks");
-                const fixedMarkerSpacingDegrees = spacingMultiple * this.rotatingHourMarkerSpacingDegrees
-                    + (this.areFixedHoursShorter ? -this.rotatingMinuteMarkerSpacingDegrees : this.rotatingMinuteMarkerSpacingDegrees);
-                if (this.isRotatingClockwise) {
-                    return this.areFixedHoursShorter ? -fixedMarkerSpacingDegrees : fixedMarkerSpacingDegrees;
-                } else {
-                    return this.areFixedHoursShorter ? fixedMarkerSpacingDegrees : -fixedMarkerSpacingDegrees;
-                }
+                return fixedMarkerStepDegrees(this.spacingMultipleForFixedHourMarks, "spacingMultipleForFixedHourMarks",
+                    this.rotatingHourMarkerSpacingDegrees, this.rotatingMinuteMarkerSpacingDegrees,
+                    this.areFixedHoursShorter, this.isRotatingClockwise);
             },
             get fixedMinuteMarkerStepDegrees() {
-                const spacingMultiple = this.validateSpacingMultiple(this.spacingMultipleForFixedMinuteMarks, "spacingMultipleForFixedMinuteMarks");
-                const rotatingDialDegreesPerMinuteMagnitude = Math.abs(this.rotatingDialDegreesPerMinute);
-                const fixedMarkerSpacingDegrees = spacingMultiple * this.rotatingMinuteMarkerSpacingDegrees
-                    + (this.areFixedMinutesShorter ? -rotatingDialDegreesPerMinuteMagnitude : rotatingDialDegreesPerMinuteMagnitude);
-                if (this.isRotatingClockwise) {
-                    return this.areFixedMinutesShorter ? -fixedMarkerSpacingDegrees : fixedMarkerSpacingDegrees;
-                } else {
-                    return this.areFixedMinutesShorter ? fixedMarkerSpacingDegrees : -fixedMarkerSpacingDegrees;
-                }
-            },
-            
-            get rotatingDialDegreesPerHour() {
-                return this.rotatingDialDegreesPerMinute * 60;
+                return fixedMarkerStepDegrees(this.spacingMultipleForFixedMinuteMarks, "spacingMultipleForFixedMinuteMarks",
+                    this.rotatingMinuteMarkerSpacingDegrees, Math.abs(this.rotatingDialDegreesPerMinute),
+                    this.areFixedMinutesShorter, this.isRotatingClockwise);
             },
             get rotatingDialDegreesPerMinute() {
                 const rotatingDialDegreesPerMinuteMagnitude = this.rotatingMinuteMarkerSpacingDegrees / 60;
                 return this.isRotatingClockwise ? rotatingDialDegreesPerMinuteMagnitude : -rotatingDialDegreesPerMinuteMagnitude;
+            },
+            get rotatingDialDegreesPerHour() {
+                return this.rotatingDialDegreesPerMinute * 60;
             },
             get rotatingDialDegreesPerSecond() {
                 return this.rotatingDialDegreesPerMinute / 60;
@@ -108,102 +212,52 @@ function createClockApp() {
             minuteMarkerThicknessFactor: 10,
             highlightAlignedMarkers: true,
             showWeekdayRing: false,
-            get fixedMinuteMarkerLength() {
-                return this.radiusOfOuterDial - this.radiusOfRotatingDial;
+
+            get radiusOfInnerFixedDial() {
+                return this.radiusOfOuterDial * (1 - 1 / PHI);
             },
             get radiusOfRotatingDial() {
-                return this.radiusOfInnerFixedDial + (this.radiusOfOuterDial - this.radiusOfInnerFixedDial) / this.phi;
+                return this.radiusOfInnerFixedDial + (this.radiusOfOuterDial - this.radiusOfInnerFixedDial) / PHI;
+            },
+            get fixedMinuteMarkerLength() {
+                return this.radiusOfOuterDial - this.radiusOfRotatingDial;
             },
             get rotatingMinuteMarkerLength() {
                 return this.radiusOfRotatingDial - this.radiusOfInnerFixedDial;
             },
             get weekdayTextRadius() {
                 return this.radiusOfRotatingDial + (this.radiusOfOuterDial - this.radiusOfRotatingDial) * 0.7;
-            },
-            rotatingHourHandLength: 60,
-            
-            get radiusOfInnerFixedDial() {
-                return this.radiusOfOuterDial * (1 - 1 / this.phi);
-            },
-            fixedHourMarkerLength: 10,
-            phi: 1.61803398875 // golden ratio
+            }
         },
 
-        // Time
         time: {
             date: initialDate,
             dateAtMinuteStart: startOfMinute(initialDate),
             dateAtHourStart: startOfHour(initialDate),
 
             get hours() {
-                return this.dateAtHourStart.getHours()
+                return this.dateAtHourStart.getHours();
             },
             get minutes() {
-                return this.dateAtMinuteStart.getMinutes()
+                return this.dateAtMinuteStart.getMinutes();
             }
         },
+
         // This enables displaying time other than current.
         // The value is +- period of full rotation.
         offsetSeconds: 0,
         selectedTimeOption: "current",
         manualTransitionTargetDate: null,
-        weekdays: [
-            "Monday",
-            "Tuesday",
-            "Wednesday",
-            "Thursday",
-            "Friday",
-            "Saturday",
-            "Sunday"
-        ],
-        paramPresets: {
-            chaoticHours: {
-                numberOfMarksForHoursOnRotatingDial: 5,
-                isRotatingClockwise: false,
-                areFixedHoursShorter: false,
-                areFixedMinutesShorter: true,
-                minuteLabelEvery: 5,
-                minuteLabel59: true
-            },
-            chaoticMinutes: {
-                numberOfMarksForHoursOnRotatingDial: 1,
-                isRotatingClockwise: true,
-                areFixedHoursShorter: false,
-                areFixedMinutesShorter: false,
-                minuteLabelEvery: 1,
-                minuteLabel59: false
-            },
-            chaoticHoursMinuteGap: {
-                numberOfMarksForHoursOnRotatingDial: 6,
-                isRotatingClockwise: true,
-                areFixedHoursShorter: true,
-                areFixedMinutesShorter: false,
-                minuteLabelEvery: 5,
-                minuteLabel59: true
-            },
-            oneWeekRotation: {
-                numberOfMarksForHoursOnRotatingDial: 14,
-                isRotatingClockwise: true,
-                areFixedHoursShorter: false,
-                areFixedMinutesShorter: false,
-                minuteLabelEvery: 5,
-                minuteLabel59: true
-            }
-        },
 
+        // Computed properties.
         get centerCoordX() {
-            return this.visuals.viewPortSize / 2
+            return this.visuals.viewPortSize / 2;
         },
         get centerCoordY() {
-            return this.visuals.viewPortSize / 2
-        },
-        formatDateTimeInputValue(date) {
-            const pad = value => String(value).padStart(2, "0");
-            return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
-                + `T${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+            return this.visuals.viewPortSize / 2;
         },
         get timeInputValue() {
-            return this.formatDateTimeInputValue(this.time.date);
+            return formatDateTimeInputValue(this.time.date);
         },
         set timeInputValue(value) {
             if (!value) {
@@ -219,66 +273,13 @@ function createClockApp() {
                 // The input edit preserves displayed seconds; keep milliseconds aligned too.
                 // Recomputing the offset from wall-clock now would subtract time passed between edits,
                 // so a minute edit could add 59s or 61s instead of exactly 60s.
-                this.offsetSeconds += this.calculateDeltaSeconds(date, previousDate);
+                this.offsetSeconds += calculateDeltaSeconds(date, previousDate);
                 this.selectedTimeOption = null;
                 this.setDisplayedDate(date);
             });
         },
-        // methods
-        getSecondsInDay() {
-            return 24 * 60 * 60;
-        },
-        civilSecondsWithinDay(date) {
-            return date.getHours() * 60 * 60
-                + date.getMinutes() * 60
-                + date.getSeconds()
-                + date.getMilliseconds() / 1000;
-        },
-        localCivilDayUtcMs(date) {
-            // Date.UTC gives a stable serial number for the local calendar day.
-            // It deliberately ignores timezone offsets, so every civil date is
-            // exactly one nominal 24h day after the previous civil date.
-            return Date.UTC(date.getFullYear(), date.getMonth(), date.getDate());
-        },
-        civilSeconds(date) {
-            // localCivilDayUtcMs() has day zero on 1970-01-01, which was Thursday.
-            // Subtract four nominal days so the weekly phase starts on Monday,
-            // matching the weekday scale's Monday-at-12-o'clock layout.
-            const daysFromCivilZeroToMonday = 4;
-            return this.localCivilDayUtcMs(date) / 1000
-                - daysFromCivilZeroToMonday * this.getSecondsInDay()
-                + this.civilSecondsWithinDay(date)
-        },
-        rotationDegreesForSeconds(seconds) {
-            return seconds * this.params.rotatingDialDegreesPerSecond;
-        },
-        rotationSpanDegreesForSeconds(seconds) {
-            return Math.abs(this.rotationDegreesForSeconds(seconds));
-        },
-        rotationTransform(angleDegrees) {
-            // Keep the logical angle unbounded and civil-time based, but do not
-            // pass huge values such as rotate(-2970144.3) to the browser. When
-            // CSS transitions are applied to SVG's transform presentation
-            // attribute, Chromium has produced visibly imprecise matrices for
-            // those large rotate() values. Computing the small equivalent matrix
-            // here preserves marker alignment.
-            //
-            // This does not reintroduce the old week-boundary discontinuity:
-            // rotatingDialAngleDegrees still advances continuously from
-            // civilSeconds(). Only the final drawing transform is reduced modulo
-            // one turn, and a rotation matrix has no 359deg -> 0deg jump for CSS
-            // to animate across.
-            const angleRadians = (angleDegrees % 360) * Math.PI / 180;
-            const cos = Math.cos(angleRadians);
-            const sin = Math.sin(angleRadians);
-            return `matrix(${cos} ${sin} ${-sin} ${cos} 0 0)`;
-        },
-        rotatingMarkerIndexAlignedWithFixedAngle(fixedMarkerAngleDegrees, rotatingMarkerSpacingDegrees, markerCount, rotatingDialAngleDegrees) {
-            const markerIndex = Math.round((fixedMarkerAngleDegrees - rotatingDialAngleDegrees) / rotatingMarkerSpacingDegrees);
-            return ((markerIndex % markerCount) + markerCount) % markerCount;
-        },
         get alignedRotatingMinuteMarkerIndex() {
-            return this.rotatingMarkerIndexAlignedWithFixedAngle(
+            return rotatingMarkerIndexAlignedWithFixedAngle(
                 this.time.minutes * this.params.fixedMinuteMarkerStepDegrees,
                 this.params.rotatingMinuteMarkerSpacingDegrees,
                 this.params.numberOfMarksForMinutesOnRotatingDial,
@@ -286,13 +287,44 @@ function createClockApp() {
             );
         },
         get alignedRotatingHourMarkerIndex() {
-            return this.rotatingMarkerIndexAlignedWithFixedAngle(
+            return rotatingMarkerIndexAlignedWithFixedAngle(
                 this.fixedHourMarkerAngleDegrees(this.time.hours % this.params.numberOfHours),
                 this.params.rotatingHourMarkerSpacingDegrees,
                 this.params.numberOfMarksForHoursOnRotatingDial,
                 this.rotatingDialAngleDegreesForDate(this.time.dateAtHourStart)
             );
         },
+        get selectedParamPreset() {
+            return Object.keys(PARAM_PRESETS).find(option => this.paramPresetMatches(option)) || null;
+        },
+        get rotatingDialAngleDegrees() {
+            const date = this.manualTransitionTargetDate || this.time.date;
+            return this.rotatingDialAngleDegreesForDate(date);
+        },
+        // One weekday spans exactly the angle swept by the rotating ring over 24h.
+        // For the Week Rotation preset this is 360 / 7 degrees.
+        get weekdayDaySpanDegrees() {
+            return this.rotationSpanDegreesForSeconds(SECONDS_PER_DAY);
+        },
+        // Match the fixed weekday scale to the ring rotation direction so day boundaries
+        // progress under the weekday pointer as the single rotating ring turns.
+        get weekdayScaleDirection() {
+            return Math.sign(this.params.rotatingDialDegreesPerSecond) || 1;
+        },
+
+        // Pure helpers exposed for test access.
+        civilSeconds,
+        rotationDegreesForSeconds(seconds) {
+            return seconds * this.params.rotatingDialDegreesPerSecond;
+        },
+        rotationSpanDegreesForSeconds(seconds) {
+            return Math.abs(this.rotationDegreesForSeconds(seconds));
+        },
+        rotatingDialAngleDegreesForDate(date) {
+            return this.rotationDegreesForSeconds(civilSeconds(date));
+        },
+
+        // State-changing actions.
         setDisplayedDate(date) {
             const displayedDate = new Date(date);
             const dateAtMinuteStart = startOfMinute(displayedDate);
@@ -308,11 +340,57 @@ function createClockApp() {
                 this.time.dateAtHourStart = dateAtHourStart;
             }
         },
-        calculateDeltaSeconds(date1, date2) {
-            return (date1.getTime() - date2.getTime()) / 1000;
+        updateClock() {
+            this.setDisplayedDate(new Date(Date.now() + this.offsetSeconds * 1000));
         },
-        rotatingDialAngleDegreesForDate(date) {
-            return this.rotationDegreesForSeconds(this.civilSeconds(date));
+        useCurrentTime() {
+            this.runManualTimeChange(() => {
+                this.selectedTimeOption = "current";
+                this.offsetSeconds = 0;
+                this.updateClock();
+            });
+        },
+        setMidnight() {
+            this.runManualTimeChange(() => {
+                this.selectedTimeOption = "midnight";
+                const now = new Date();
+                const midnight = startOfDay(now);
+                this.offsetSeconds = calculateDeltaSeconds(midnight, now);
+                this.setDisplayedDate(midnight);
+            });
+        },
+        setRandomTime() {
+            this.runManualTimeChange(() => {
+                this.selectedTimeOption = "random";
+                const rotationPeriodSeconds = 360 / this.params.rotatingDialDegreesPerSecond;
+                this.offsetSeconds = Math.floor(Math.random() * rotationPeriodSeconds);
+                this.updateClock();
+            });
+        },
+        setParams(option) {
+            const preset = PARAM_PRESETS[option];
+            if (!preset) {
+                throw new Error(`Unknown parameter preset: ${option}`);
+            }
+            this.params.numberOfMarksForHoursOnRotatingDial = preset.numberOfMarksForHoursOnRotatingDial;
+            this.params.isRotatingClockwise = preset.isRotatingClockwise;
+            this.params.areFixedHoursShorter = preset.areFixedHoursShorter;
+            this.params.areFixedMinutesShorter = preset.areFixedMinutesShorter;
+            this.visuals.minuteLabelEvery = preset.minuteLabelEvery;
+            this.visuals.minuteLabel59 = preset.minuteLabel59;
+        },
+        isSelectedParamPreset(option) {
+            return this.selectedParamPreset === option;
+        },
+        paramPresetMatches(option) {
+            const preset = PARAM_PRESETS[option];
+            return !!preset
+                && this.params.numberOfMarksForHoursOnRotatingDial === preset.numberOfMarksForHoursOnRotatingDial
+                && this.params.isRotatingClockwise === preset.isRotatingClockwise
+                && this.params.areFixedHoursShorter === preset.areFixedHoursShorter
+                && this.params.areFixedMinutesShorter === preset.areFixedMinutesShorter
+                && this.visuals.minuteLabelEvery === preset.minuteLabelEvery
+                && this.visuals.minuteLabel59 === preset.minuteLabel59;
         },
         runManualTimeChange(changeTime) {
             // CSS transform easing restarts on every target change. Latch the user-chosen
@@ -326,15 +404,23 @@ function createClockApp() {
                 this.manualTransitionTargetDate = targetDate;
             }
         },
+        finishRotatingDialTransition(event) {
+            if ((event.currentTarget && event.target && event.currentTarget !== event.target)
+                || event.propertyName !== "transform"
+                || !this.manualTransitionTargetDate) {
+                return;
+            }
+            this.manualTransitionTargetDate = null;
+        },
+
+        // SVG rendering helpers.
         markerPath(innerRadius, outerRadius, markerSpanDegrees, closePath) {
             // Marker is shaped like a trapeze. It overshoots its radial endpoints and is clipped to its ring.
-            // The angular size is how much the dial rotates within one minute or hour. Then take a half of it for easier calculation of offsets.
             const markerSpanRadians = markerSpanDegrees * Math.PI / 180;
             const halfMarkerSpanRadians = markerSpanRadians / 2;
-            const markerOvershoot = 4;
             const radialDirection = Math.sign(outerRadius - innerRadius) || 1;
-            const adjustedInnerRadius = innerRadius - radialDirection * markerOvershoot;
-            const adjustedOuterRadius = outerRadius + radialDirection * markerOvershoot;
+            const adjustedInnerRadius = innerRadius - radialDirection * MARKER_OVERSHOOT;
+            const adjustedOuterRadius = outerRadius + radialDirection * MARKER_OVERSHOOT;
             const innerHorizontalOffset = adjustedInnerRadius * Math.sin(halfMarkerSpanRadians);
             const innerVerticalOffset = adjustedInnerRadius * Math.cos(halfMarkerSpanRadians);
             const outerHorizontalOffset = adjustedOuterRadius * Math.sin(halfMarkerSpanRadians);
@@ -343,7 +429,7 @@ function createClockApp() {
                 L${this.centerCoordX - outerHorizontalOffset},${this.centerCoordY - outerVerticalOffset}
                 l${2 * outerHorizontalOffset},0
                 L${this.centerCoordX + innerHorizontalOffset},${this.centerCoordY - innerVerticalOffset}
-                ${closePath ? 'z' : ''}`;
+                ${closePath ? "z" : ""}`;
         },
         ringClipPath(innerRadius, outerRadius) {
             const inner = Math.max(0, Math.min(innerRadius, outerRadius));
@@ -398,83 +484,8 @@ function createClockApp() {
             }
             return (hourIndex - this.params.numberOfHours) * this.params.fixedHourMarkerStepDegrees;
         },
-        updateClock() {
-            this.setDisplayedDate(new Date(Date.now() + this.offsetSeconds * 1000));
-        },
-        useCurrentTime() {
-            this.runManualTimeChange(() => {
-                this.selectedTimeOption = "current";
-                this.offsetSeconds = 0;
-                this.updateClock();
-            });
-        },
-        setMidnight() {
-            this.runManualTimeChange(() => {
-                this.selectedTimeOption = "midnight";
-                const now = new Date();
-                const midnight = startOfDay(now);
-                this.offsetSeconds = this.calculateDeltaSeconds(midnight, now);
-                this.setDisplayedDate(midnight);
-            });
-        },
-        setRandomTime() {
-            this.runManualTimeChange(() => {
-                this.selectedTimeOption = "random";
-                const rotationPeriodSeconds = 360 / this.params.rotatingDialDegreesPerSecond;
-                this.offsetSeconds = Math.floor(Math.random() * rotationPeriodSeconds);
-                this.updateClock();
-            });
-        },
-        setParams(option) {
-            const preset = this.paramPresets[option];
-            if (!preset) {
-                throw new Error(`Unknown parameter preset: ${option}`);
-            }
-            this.params.numberOfMarksForHoursOnRotatingDial = preset.numberOfMarksForHoursOnRotatingDial;
-            this.params.isRotatingClockwise = preset.isRotatingClockwise;
-            this.params.areFixedHoursShorter = preset.areFixedHoursShorter;
-            this.params.areFixedMinutesShorter = preset.areFixedMinutesShorter;
-            this.visuals.minuteLabelEvery = preset.minuteLabelEvery;
-            this.visuals.minuteLabel59 = preset.minuteLabel59;
-        },
-        get selectedParamPreset() {
-            return Object.keys(this.paramPresets).find(option => this.paramPresetMatches(option)) || null;
-        },
-        isSelectedParamPreset(option) {
-            return this.selectedParamPreset === option;
-        },
-        paramPresetMatches(option) {
-            const preset = this.paramPresets[option];
-            return !!preset
-                && this.params.numberOfMarksForHoursOnRotatingDial === preset.numberOfMarksForHoursOnRotatingDial
-                && this.params.isRotatingClockwise === preset.isRotatingClockwise
-                && this.params.areFixedHoursShorter === preset.areFixedHoursShorter
-                && this.params.areFixedMinutesShorter === preset.areFixedMinutesShorter
-                && this.visuals.minuteLabelEvery === preset.minuteLabelEvery
-                && this.visuals.minuteLabel59 === preset.minuteLabel59;
-        },
-        get rotatingDialAngleDegrees() {
-            const date = this.manualTransitionTargetDate || this.time.date;
-            return this.rotatingDialAngleDegreesForDate(date);
-        },
-        finishRotatingDialTransition(event) {
-            if ((event.currentTarget && event.target && event.currentTarget !== event.target)
-                || event.propertyName !== "transform"
-                || !this.manualTransitionTargetDate) {
-                return;
-            }
-            this.manualTransitionTargetDate = null;
-        },
-        // One weekday spans exactly the angle swept by the rotating ring over 24h.
-        // For the Week Rotation preset this is 360 / 7 degrees.
-        get weekdayDaySpanDegrees() {
-            return this.rotationSpanDegreesForSeconds(this.getSecondsInDay());
-        },
-        // Match the fixed weekday scale to the ring rotation direction so day boundaries
-        // progress under the weekday pointer as the single rotating ring turns.
-        get weekdayScaleDirection() {
-            return Math.sign(this.params.rotatingDialDegreesPerSecond) || 1;
-        },
+
+        // Lifecycle.
         setupUpdate() {
             this.setParams("chaoticHours");
             this.updateClock();

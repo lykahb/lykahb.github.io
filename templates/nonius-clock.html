@@ -406,22 +406,22 @@
                 <path :d="ringClipPath(visuals.radiusOfInnerFixedDial, visuals.radiusOfRotatingDial)" clip-rule="evenodd"></path>
             </clipPath>
             <clipPath id="fixedHourMarkerClipPath">
-                <path :d="ringClipPath(visuals.radiusOfInnerFixedDial / visuals.phi, visuals.radiusOfInnerFixedDial)" clip-rule="evenodd"></path>
+                <path :d="ringClipPath(visuals.radiusOfInnerFixedDial / PHI, visuals.radiusOfInnerFixedDial)" clip-rule="evenodd"></path>
             </clipPath>
             <clipPath id="rotatingHourMarkerClipPath">
-                <path :d="ringClipPath(visuals.radiusOfInnerFixedDial, visuals.radiusOfInnerFixedDial + (visuals.radiusOfRotatingDial - visuals.radiusOfInnerFixedDial) / visuals.phi)" clip-rule="evenodd"></path>
+                <path :d="ringClipPath(visuals.radiusOfInnerFixedDial, visuals.radiusOfInnerFixedDial + (visuals.radiusOfRotatingDial - visuals.radiusOfInnerFixedDial) / PHI)" clip-rule="evenodd"></path>
             </clipPath>
             <path id="rotatingMinuteMarker"
                 :d="markerPath(visuals.radiusOfInnerFixedDial, visuals.radiusOfRotatingDial, visuals.minuteMarkerThicknessFactor * Math.abs(params.rotatingDialDegreesPerMinute), false)"></path>
             <path id="fixedMinuteMarker"
                 :d="markerPath(visuals.radiusOfOuterDial - visuals.fixedMinuteMarkerLength, visuals.radiusOfOuterDial, visuals.minuteMarkerThicknessFactor * Math.abs(params.rotatingDialDegreesPerMinute), false)"></path>
             <path id="fixedHourMarkerPath"
-                :d="markerPath(visuals.radiusOfInnerFixedDial, visuals.radiusOfInnerFixedDial / visuals.phi, 60 * Math.abs(params.rotatingDialDegreesPerMinute), false)"></path>
+                :d="markerPath(visuals.radiusOfInnerFixedDial, visuals.radiusOfInnerFixedDial / PHI, 60 * Math.abs(params.rotatingDialDegreesPerMinute), false)"></path>
             <use id="fixedHourMarker" href="#fixedHourMarkerPath" paint-order="fill"></use>
             <path id="rotatingHourMarkerPathClosed"
-                :d="markerPath(visuals.radiusOfInnerFixedDial, visuals.radiusOfInnerFixedDial + (visuals.radiusOfRotatingDial - visuals.radiusOfInnerFixedDial) / visuals.phi, 60 * Math.abs(params.rotatingDialDegreesPerMinute), true)"></path>
+                :d="markerPath(visuals.radiusOfInnerFixedDial, visuals.radiusOfInnerFixedDial + (visuals.radiusOfRotatingDial - visuals.radiusOfInnerFixedDial) / PHI, 60 * Math.abs(params.rotatingDialDegreesPerMinute), true)"></path>
             <path id="rotatingHourMarkerPath"
-                :d="markerPath(visuals.radiusOfInnerFixedDial, visuals.radiusOfInnerFixedDial + (visuals.radiusOfRotatingDial - visuals.radiusOfInnerFixedDial) / visuals.phi, 60 * Math.abs(params.rotatingDialDegreesPerMinute), false)"></path>
+                :d="markerPath(visuals.radiusOfInnerFixedDial, visuals.radiusOfInnerFixedDial + (visuals.radiusOfRotatingDial - visuals.radiusOfInnerFixedDial) / PHI, 60 * Math.abs(params.rotatingDialDegreesPerMinute), false)"></path>
             <use id="rotatingHourMarker" href="#rotatingHourMarkerPath" paint-order="fill"></use>
             <use id="rotatingHourMarkerFirst" href="#rotatingHourMarkerPathClosed" paint-order="fill"></use>
         </defs>
@@ -430,14 +430,14 @@
             <circle class="outerDialCircleFill" :cx="centerCoordX" :cy="centerCoordY" :r="visuals.radiusOfOuterDial"></circle>
 
             <g v-if="visuals.showWeekdayRing" id="weekdayScale">
-                <path v-for="(day, i) in weekdays"
+                <path v-for="(day, i) in WEEKDAYS"
                     :id="`weekdayTextPath-${i}`"
                     class="weekdayTextGuide"
                     :d="weekdayTextPath(i)"></path>
-                <path v-for="i in Array.from({length: weekdays.length + 1}, (x, i) => i)"
+                <path v-for="i in Array.from({length: WEEKDAYS.length + 1}, (x, i) => i)"
                     class="weekdaySeparator"
                     :d="weekdaySeparatorPath(i)"></path>
-                <text v-for="(day, i) in weekdays" class="weekdayName" text-anchor="middle">
+                <text v-for="(day, i) in WEEKDAYS" class="weekdayName" text-anchor="middle">
                     <textPath :href="`#weekdayTextPath-${i}`" startOffset="50%">
                         {{ day }}
                     </textPath>
@@ -519,10 +519,10 @@
                 class="hourMarker"
                 :transform="`rotate(${fixedHourMarkerAngleDegrees(i)} ${centerCoordX} ${centerCoordY})`">
                 <circle class="fixedHourMarkerCircle" :cx="centerCoordX"
-                    :cy="centerCoordY - visuals.radiusOfInnerFixedDial + (visuals.radiusOfInnerFixedDial * (1 - 1 / visuals.phi)) / 2"></circle>
-                <text :x="centerCoordX" :y="centerCoordY - visuals.radiusOfInnerFixedDial + (visuals.radiusOfInnerFixedDial * (1 - 1 / visuals.phi)) / 2"
+                    :cy="centerCoordY - visuals.radiusOfInnerFixedDial + (visuals.radiusOfInnerFixedDial * (1 - 1 / PHI)) / 2"></circle>
+                <text :x="centerCoordX" :y="centerCoordY - visuals.radiusOfInnerFixedDial + (visuals.radiusOfInnerFixedDial * (1 - 1 / PHI)) / 2"
                     text-anchor="middle" dominant-baseline="central"
-                    :transform="`rotate(${-fixedHourMarkerAngleDegrees(i)} ${centerCoordX} ${centerCoordY - visuals.radiusOfInnerFixedDial + (visuals.radiusOfInnerFixedDial * (1 - 1 / visuals.phi)) / 2})`">
+                    :transform="`rotate(${-fixedHourMarkerAngleDegrees(i)} ${centerCoordX} ${centerCoordY - visuals.radiusOfInnerFixedDial + (visuals.radiusOfInnerFixedDial * (1 - 1 / PHI)) / 2})`">
                     {{ i == 0 ? params.numberOfHours : i }}
                 </text>
             </g>
