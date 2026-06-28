@@ -278,3 +278,79 @@ test("alignment highlights can be disabled", async ({ page }) => {
     await page.locator("#highlightAlignedMarkers").uncheck();
     await expect(page.locator(".isMarkerHighlighted")).toHaveCount(0);
 });
+
+test("invalid numeric controls keep the previous clock state", async ({ page }) => {
+    const consoleErrors = [];
+    page.on("console", message => {
+        if (message.type() === "error") {
+            consoleErrors.push(message.text());
+        }
+    });
+
+    await gotoClock(page);
+    await page.locator(".advanced-parameters > summary").click();
+
+    const cases = [
+        {
+            selector: "#numberOfMarksForHoursOnRotatingDial",
+            invalidValue: "61",
+            validValue: "8",
+            readState: () => window.__noniusClockApp.params.numberOfMarksForHoursOnRotatingDial,
+        },
+        {
+            selector: "#spacingMultipleForFixedHourMarks",
+            invalidValue: "1.5",
+            validValue: "3",
+            readState: () => window.__noniusClockApp.params.spacingMultipleForFixedHourMarks,
+        },
+        {
+            selector: "#spacingMultipleForFixedMinuteMarks",
+            invalidValue: "0",
+            validValue: "2",
+            readState: () => window.__noniusClockApp.params.spacingMultipleForFixedMinuteMarks,
+        },
+        {
+            selector: "#minuteLabelEvery",
+            invalidValue: "61",
+            validValue: "10",
+            readState: () => window.__noniusClockApp.visuals.minuteLabelEvery,
+        },
+        {
+            selector: "#minuteMarkerThicknessFactor",
+            invalidValue: "10.2",
+            validValue: "2.5",
+            readState: () => window.__noniusClockApp.visuals.minuteMarkerThicknessFactor,
+        },
+    ];
+
+    for (const testCase of cases) {
+        const input = page.locator(testCase.selector);
+        await input.fill(testCase.validValue);
+        await expect.poll(() => appValue(page, testCase.readState)).toBe(Number(testCase.validValue));
+
+        const previousValue = await appValue(page, testCase.readState);
+        await input.fill(testCase.invalidValue);
+
+        await expect(input).toHaveJSProperty("validity.valid", false);
+        await expect.poll(() => appValue(page, testCase.readState)).toBe(previousValue);
+
+        const invalidStyle = await input.evaluate(element => {
+            const style = getComputedStyle(element);
+            return {
+                backgroundColor: style.backgroundColor,
+                borderColor: style.borderColor,
+            };
+        });
+        expect(invalidStyle.backgroundColor).toBe("rgb(255, 244, 242)");
+        expect(invalidStyle.borderColor).toBe("rgb(184, 74, 66)");
+
+        const transform = await page.locator("#rotatingDial").getAttribute("transform");
+        expect(transform).not.toContain("NaN");
+
+        await input.fill("");
+        await expect(input).toHaveJSProperty("validity.valid", false);
+        await expect.poll(() => appValue(page, testCase.readState)).toBe(previousValue);
+    }
+
+    expect(consoleErrors).toEqual([]);
+});

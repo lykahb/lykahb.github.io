@@ -91,15 +91,8 @@ function formatDateTimeInputValue(date) {
         + `T${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
 }
 
-function validateSpacingMultiple(value, paramName) {
-    if (!Number.isInteger(value) || value < 1) {
-        throw new Error(`${paramName} must be an integer greater than or equal to 1`);
-    }
-    return value;
-}
-
-function fixedMarkerStepDegrees(spacingMultiple, spacingMultipleParamName, baseSpacingDegrees, alignmentSpacingDegrees, isShorter, isRotatingClockwise) {
-    const fixedMarkerSpacingDegrees = validateSpacingMultiple(spacingMultiple, spacingMultipleParamName) * baseSpacingDegrees
+function fixedMarkerStepDegrees(spacingMultiple, baseSpacingDegrees, alignmentSpacingDegrees, isShorter, isRotatingClockwise) {
+    const fixedMarkerSpacingDegrees = spacingMultiple * baseSpacingDegrees
         + (isShorter ? -alignmentSpacingDegrees : alignmentSpacingDegrees);
     const direction = isRotatingClockwise ? 1 : -1;
     return direction * (isShorter ? -fixedMarkerSpacingDegrees : fixedMarkerSpacingDegrees);
@@ -183,12 +176,12 @@ function createClockApp() {
             // wraps non-12 hour marks backward from 12 so the larger gap lands between 12 and 1.
             get fixedHourMarkerStepDegrees() {
                 // Each hour the next minute mark aligns.
-                return fixedMarkerStepDegrees(this.spacingMultipleForFixedHourMarks, "spacingMultipleForFixedHourMarks",
+                return fixedMarkerStepDegrees(this.spacingMultipleForFixedHourMarks,
                     this.rotatingHourMarkerSpacingDegrees, this.rotatingMinuteMarkerSpacingDegrees,
                     this.areFixedHoursShorter, this.isRotatingClockwise);
             },
             get fixedMinuteMarkerStepDegrees() {
-                return fixedMarkerStepDegrees(this.spacingMultipleForFixedMinuteMarks, "spacingMultipleForFixedMinuteMarks",
+                return fixedMarkerStepDegrees(this.spacingMultipleForFixedMinuteMarks,
                     this.rotatingMinuteMarkerSpacingDegrees, Math.abs(this.rotatingDialDegreesPerMinute),
                     this.areFixedMinutesShorter, this.isRotatingClockwise);
             },
@@ -342,6 +335,12 @@ function createClockApp() {
         },
         updateClock() {
             this.setDisplayedDate(new Date(Date.now() + this.offsetSeconds * 1000));
+        },
+        setNumberInputValue(event, target, key) {
+            const input = event.target;
+            if (input.validity.valid) {
+                target[key] = input.valueAsNumber;
+            }
         },
         useCurrentTime() {
             this.runManualTimeChange(() => {
