@@ -326,32 +326,53 @@ test("week rotation keeps lower weekday labels upright", async ({ page }) => {
     await page.getByRole("button", { name: "Week rotation" }).click();
 
     const result = await page.evaluate(() => {
-        const sweepFlagPattern = / A[^ ]+,[^ ]+ 0 \d ([01]) /;
+        const arcSweepFlagPattern = / A[^ ]+,[^ ]+ 0 \d ([01]) /g;
         return {
-            lowerHalfByDay: Array.from(document.querySelectorAll(".weekdayName"), (text, index) => ({
-                day: text.textContent.trim(),
-                isLowerHalf: window.__noniusClockApp.isLowerHalfAngle(
-                    window.__noniusClockApp.weekdayBoundaryAngleDegrees(index)
-                        + window.__noniusClockApp.weekdayScaleDirection
-                            * window.__noniusClockApp.weekdayDaySpanDegrees / 2
-                ),
+            textGuides: Array.from(document.querySelectorAll(".weekdayTextGuide"), path => ({
+                id: path.id,
+                sweepFlags: Array.from(path.getAttribute("d").matchAll(arcSweepFlagPattern), match => match[1]),
             })),
-            sweepFlags: Array.from(document.querySelectorAll(".weekdayTextGuide"), path => {
-                return path.getAttribute("d").match(sweepFlagPattern)?.[1];
+            labels: Array.from(document.querySelectorAll(".weekdayName"), (text, index) => {
+                const textPath = text.querySelector("textPath");
+                const startOffset = textPath.startOffset?.baseVal?.valueAsString
+                    || textPath.getAttribute("startOffset")
+                    || textPath.getAttribute("startoffset");
+                return {
+                    day: text.textContent.trim(),
+                    isLowerHalf: window.__noniusClockApp.isLowerHalfAngle(
+                        window.__noniusClockApp.weekdayTextCenterAngleDegrees(index)
+                    ),
+                    href: textPath.getAttribute("href"),
+                    startOffsetPercent: Number.parseFloat(startOffset),
+                };
             }),
         };
     });
 
-    expect(result.lowerHalfByDay).toEqual([
-        { day: "Monday", isLowerHalf: false },
-        { day: "Tuesday", isLowerHalf: false },
-        { day: "Wednesday", isLowerHalf: true },
-        { day: "Thursday", isLowerHalf: true },
-        { day: "Friday", isLowerHalf: true },
-        { day: "Saturday", isLowerHalf: false },
-        { day: "Sunday", isLowerHalf: false },
+    expect(result.textGuides).toEqual([
+        { id: "weekdayTextPathClockwise", sweepFlags: ["1", "1"] },
+        { id: "weekdayTextPathCounterclockwise", sweepFlags: ["0", "0"] },
     ]);
-    expect(result.sweepFlags).toEqual(["1", "1", "0", "0", "0", "1", "1"]);
+    expect(result.labels.map(({ day, isLowerHalf, href }) => ({ day, isLowerHalf, href }))).toEqual([
+        { day: "Monday", isLowerHalf: false, href: "#weekdayTextPathClockwise" },
+        { day: "Tuesday", isLowerHalf: false, href: "#weekdayTextPathClockwise" },
+        { day: "Wednesday", isLowerHalf: true, href: "#weekdayTextPathCounterclockwise" },
+        { day: "Thursday", isLowerHalf: true, href: "#weekdayTextPathCounterclockwise" },
+        { day: "Friday", isLowerHalf: true, href: "#weekdayTextPathCounterclockwise" },
+        { day: "Saturday", isLowerHalf: false, href: "#weekdayTextPathClockwise" },
+        { day: "Sunday", isLowerHalf: false, href: "#weekdayTextPathClockwise" },
+    ]);
+    [
+        100 / 14,
+        300 / 14,
+        900 / 14,
+        50,
+        500 / 14,
+        1100 / 14,
+        1300 / 14,
+    ].forEach((expectedStartOffsetPercent, index) => {
+        expect(result.labels[index].startOffsetPercent).toBeCloseTo(expectedStartOffsetPercent, 4);
+    });
 });
 
 test("current-best alignment mode makes the current interval most aligned at midpoint", async ({ page }) => {

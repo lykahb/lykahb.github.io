@@ -458,13 +458,15 @@ function createClockApp() {
             const RING_CLIP_BLEED = 0.1;  // A tiny overlap prevents blank pixels from antialising
             const inner = Math.max(0, Math.min(innerRadius, outerRadius) - RING_CLIP_BLEED);
             const outer = Math.max(innerRadius, outerRadius) + RING_CLIP_BLEED;
-            const circlePath = (radius, sweepFlag) => `M${this.centerCoordX},${this.centerCoordY - radius}
+            if (inner === 0) {
+                return this.circlePath(outer, 1);
+            }
+            return `${this.circlePath(outer, 1)} ${this.circlePath(inner, 0)}`;
+        },
+        circlePath(radius, sweepFlag) {
+            return `M${this.centerCoordX},${this.centerCoordY - radius}
                 A${radius},${radius} 0 1 ${sweepFlag} ${this.centerCoordX},${this.centerCoordY + radius}
                 A${radius},${radius} 0 1 ${sweepFlag} ${this.centerCoordX},${this.centerCoordY - radius}`;
-            if (inner === 0) {
-                return circlePath(outer, 1);
-            }
-            return `${circlePath(outer, 1)} ${circlePath(inner, 0)}`;
         },
         pointOnCircle(radius, angleDegrees) {
             const pointAngleRadians = angleDegrees * Math.PI / 180;
@@ -472,14 +474,6 @@ function createClockApp() {
                 x: this.centerCoordX + radius * Math.sin(pointAngleRadians),
                 y: this.centerCoordY - radius * Math.cos(pointAngleRadians)
             };
-        },
-        arcPath(radius, startAngleDegrees, endAngleDegrees) {
-            const start = this.pointOnCircle(radius, startAngleDegrees);
-            const end = this.pointOnCircle(radius, endAngleDegrees);
-            const arcSpanDegrees = endAngleDegrees - startAngleDegrees;
-            const largeArcFlag = Math.abs(arcSpanDegrees) > 180 ? 1 : 0;
-            const sweepFlag = arcSpanDegrees >= 0 ? 1 : 0;
-            return `M${start.x},${start.y} A${radius},${radius} 0 ${largeArcFlag} ${sweepFlag} ${end.x},${end.y}`;
         },
         radialLinePath(innerRadius, outerRadius, angleDegrees) {
             const inner = this.pointOnCircle(innerRadius, angleDegrees);
@@ -493,19 +487,21 @@ function createClockApp() {
                 this.weekdayBoundaryAngleDegrees(dayIndex)
             );
         },
-        weekdayTextPath(dayIndex) {
-            const daySpanDegrees = this.weekdayDaySpanDegrees;
-            const textSpanDegrees = Math.min(Math.max(daySpanDegrees * 0.84, 24), 150);
-            const textCenterAngleDegrees = this.weekdayBoundaryAngleDegrees(dayIndex) + this.weekdayScaleDirection * daySpanDegrees / 2;
-            const textStartAngleDegrees = textCenterAngleDegrees - textSpanDegrees / 2;
-            const textEndAngleDegrees = textCenterAngleDegrees + textSpanDegrees / 2;
-
-            // SVG text follows the path direction, so reverse lower-half labels
-            // to keep them readable instead of upside down.
-            if (this.isLowerHalfAngle(textCenterAngleDegrees)) {
-                return this.arcPath(this.visuals.weekdayTextRadius, textEndAngleDegrees, textStartAngleDegrees);
-            }
-            return this.arcPath(this.visuals.weekdayTextRadius, textStartAngleDegrees, textEndAngleDegrees);
+        weekdayTextCenterAngleDegrees(dayIndex) {
+            return this.weekdayBoundaryAngleDegrees(dayIndex)
+                + this.weekdayScaleDirection * this.weekdayDaySpanDegrees / 2;
+        },
+        weekdayTextPathHref(dayIndex) {
+            return this.isLowerHalfAngle(this.weekdayTextCenterAngleDegrees(dayIndex))
+                ? "#weekdayTextPathCounterclockwise"
+                : "#weekdayTextPathClockwise";
+        },
+        weekdayTextStartOffset(dayIndex) {
+            const textCenterAngleDegrees = normalizedDegrees(this.weekdayTextCenterAngleDegrees(dayIndex));
+            const pathAngleDegrees = this.isLowerHalfAngle(textCenterAngleDegrees)
+                ? 360 - textCenterAngleDegrees
+                : textCenterAngleDegrees;
+            return `${pathAngleDegrees / 360 * 100}%`;
         },
         isLowerHalfAngle(angleDegrees) {
             const normalizedAngleDegrees = normalizedDegrees(angleDegrees);

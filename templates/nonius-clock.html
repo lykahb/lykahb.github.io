@@ -441,15 +441,17 @@
             <circle class="outerDialCircleFill" :cx="centerCoordX" :cy="centerCoordY" :r="visuals.radiusOfOuterDial"></circle>
 
             <g v-if="visuals.showWeekdayRing" id="weekdayScale">
-                <path v-for="(day, i) in WEEKDAYS"
-                    :id="`weekdayTextPath-${i}`"
+                <path id="weekdayTextPathClockwise"
                     class="weekdayTextGuide"
-                    :d="weekdayTextPath(i)"></path>
+                    :d="circlePath(visuals.weekdayTextRadius, 1)"></path>
+                <path id="weekdayTextPathCounterclockwise"
+                    class="weekdayTextGuide"
+                    :d="circlePath(visuals.weekdayTextRadius, 0)"></path>
                 <path v-for="i in Array.from({length: WEEKDAYS.length + 1}, (x, i) => i)"
                     class="weekdaySeparator"
                     :d="weekdaySeparatorPath(i)"></path>
                 <text v-for="(day, i) in WEEKDAYS" class="weekdayName" text-anchor="middle">
-                    <textPath :href="`#weekdayTextPath-${i}`" startOffset="50%">
+                    <textPath :href="weekdayTextPathHref(i)" :start-offset.camel="weekdayTextStartOffset(i)">
                         {{ day }}
                     </textPath>
                 </text>
