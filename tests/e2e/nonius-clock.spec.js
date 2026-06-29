@@ -296,11 +296,11 @@ test("week rotation preset advances one seventh of a turn per civil day", async 
     await gotoClock(page);
 
     await page.locator(".advanced-parameters > summary").click();
-    await page.locator("#showWeekdayRing").check();
     await page.getByRole("button", { name: "Week rotation" }).click();
 
     await expect(page.locator("#weekdayScale")).toBeVisible();
     await expect(page.locator(".weekdayName")).toHaveCount(7);
+    await expect(page.locator("#showWeekdayRing")).toBeChecked();
 
     const result = await page.evaluate(() => {
         const app = window.__noniusClockApp;
@@ -310,19 +310,20 @@ test("week rotation preset advances one seventh of a turn per civil day", async 
             mondayBoundaryAngleDegrees: app.weekdayBoundaryAngleDegrees(0),
             weekdayDaySpanDegrees: app.weekdayDaySpanDegrees,
             angleDelta: app.rotationSpanDegreesForSeconds(app.civilSeconds(tuesday) - app.civilSeconds(monday)),
+            spacingMultipleForFixedMinuteMarks: app.params.spacingMultipleForFixedMinuteMarks,
         };
     });
 
     expect(result.mondayBoundaryAngleDegrees).toBeCloseTo(0, 9);
     expect(result.weekdayDaySpanDegrees).toBeCloseTo(360 / 7, 9);
     expect(result.angleDelta).toBeCloseTo(360 / 7, 9);
+    expect(result.spacingMultipleForFixedMinuteMarks).toBe(2);
 });
 
 test("week rotation keeps lower weekday labels upright", async ({ page }) => {
     await gotoClock(page);
 
     await page.locator(".advanced-parameters > summary").click();
-    await page.locator("#showWeekdayRing").check();
     await page.getByRole("button", { name: "Week rotation" }).click();
 
     const result = await page.evaluate(() => {
@@ -435,9 +436,9 @@ test("alignment mode is independent from presets and keeps weekday pointer at ri
     await page.locator(".advanced-parameters > summary").click();
     await page.getByLabel("current best").check();
     await page.getByRole("button", { name: "Week rotation" }).click();
-    await page.locator("#showWeekdayRing").check();
 
     await expect.poll(() => appValue(page, () => window.__noniusClockApp.params.alignmentMode)).toBe("currentBest");
+    await expect(page.locator("#showWeekdayRing")).toBeChecked();
     await expect(page.locator(".isWeekdayPointer")).toHaveCount(1);
     await expect(page.locator(".isWeekdayPointer")).toHaveAttribute("transform", "rotate(0 200 200)");
 

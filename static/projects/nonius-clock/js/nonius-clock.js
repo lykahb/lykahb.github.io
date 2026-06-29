@@ -38,32 +38,40 @@ const PARAM_PRESETS = {
         isRotatingClockwise: false,
         areFixedHoursShorter: false,
         areFixedMinutesShorter: true,
+        spacingMultipleForFixedMinuteMarks: 1,
         minuteLabelEvery: 5,
-        minuteLabel59: true
+        minuteLabel59: true,
+        showWeekdayRing: false
     },
     chaoticMinutes: {
         numberOfMarksForHoursOnRotatingDial: 1,
         isRotatingClockwise: true,
         areFixedHoursShorter: false,
         areFixedMinutesShorter: false,
+        spacingMultipleForFixedMinuteMarks: 1,
         minuteLabelEvery: 1,
-        minuteLabel59: false
+        minuteLabel59: false,
+        showWeekdayRing: false
     },
     chaoticHoursMinuteGap: {
         numberOfMarksForHoursOnRotatingDial: 6,
         isRotatingClockwise: true,
         areFixedHoursShorter: true,
         areFixedMinutesShorter: false,
+        spacingMultipleForFixedMinuteMarks: 1,
         minuteLabelEvery: 5,
-        minuteLabel59: true
+        minuteLabel59: true,
+        showWeekdayRing: false
     },
     oneWeekRotation: {
         numberOfMarksForHoursOnRotatingDial: 14,
         isRotatingClockwise: true,
         areFixedHoursShorter: false,
         areFixedMinutesShorter: false,
+        spacingMultipleForFixedMinuteMarks: 2,
         minuteLabelEvery: 5,
-        minuteLabel59: true
+        minuteLabel59: true,
+        showWeekdayRing: true
     }
 };
 
@@ -399,8 +407,10 @@ function createClockApp() {
             this.params.isRotatingClockwise = preset.isRotatingClockwise;
             this.params.areFixedHoursShorter = preset.areFixedHoursShorter;
             this.params.areFixedMinutesShorter = preset.areFixedMinutesShorter;
+            this.params.spacingMultipleForFixedMinuteMarks = preset.spacingMultipleForFixedMinuteMarks;
             this.visuals.minuteLabelEvery = preset.minuteLabelEvery;
             this.visuals.minuteLabel59 = preset.minuteLabel59;
+            this.visuals.showWeekdayRing = preset.showWeekdayRing;
         },
         isSelectedParamPreset(option) {
             return this.selectedParamPreset === option;
@@ -412,8 +422,10 @@ function createClockApp() {
                 && this.params.isRotatingClockwise === preset.isRotatingClockwise
                 && this.params.areFixedHoursShorter === preset.areFixedHoursShorter
                 && this.params.areFixedMinutesShorter === preset.areFixedMinutesShorter
+                && this.params.spacingMultipleForFixedMinuteMarks === preset.spacingMultipleForFixedMinuteMarks
                 && this.visuals.minuteLabelEvery === preset.minuteLabelEvery
-                && this.visuals.minuteLabel59 === preset.minuteLabel59;
+                && this.visuals.minuteLabel59 === preset.minuteLabel59
+                && this.visuals.showWeekdayRing === preset.showWeekdayRing;
         },
         runManualTimeChange(changeTime) {
             // CSS transform easing restarts on every target change. Latch the user-chosen
