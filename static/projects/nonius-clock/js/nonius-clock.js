@@ -144,8 +144,16 @@ function rotationTransform(angleDegrees) {
     return `matrix(${cos} ${sin} ${-sin} ${cos} 0 0)`;
 }
 
-function rotatingMarkerIndexAlignedWithFixedAngle(fixedMarkerAngleDegrees, rotatingMarkerSpacingDegrees, markerCount, rotatingDialAngleDegrees) {
-    const markerIndex = Math.round((fixedMarkerAngleDegrees - rotatingDialAngleDegrees) / rotatingMarkerSpacingDegrees);
+function rotatingMarkerIndexAlignedWithFixedAngle(
+    fixedMarkerAngleDegrees,
+    rotatingMarkerSpacingDegrees,
+    markerCount,
+    rotatingDialAngleDegrees,
+    rotatingMarkerPhaseDegrees
+) {
+    const markerIndex = Math.round(
+        (fixedMarkerAngleDegrees - rotatingDialAngleDegrees - rotatingMarkerPhaseDegrees) / rotatingMarkerSpacingDegrees
+    );
     return ((markerIndex % markerCount) + markerCount) % markerCount;
 }
 
@@ -162,6 +170,7 @@ function createClockApp() {
             numberOfHours: 12,
             spacingMultipleForFixedHourMarks: 1,
             spacingMultipleForFixedMinuteMarks: 1,
+            alignmentMode: "startExact",
 
             get numberOfMarksForMinutesOnRotatingDial() {
                 return this.numberOfMarksForHoursOnRotatingDial * this.numberOfHours;
@@ -276,7 +285,8 @@ function createClockApp() {
                 this.time.minutes * this.params.fixedMinuteMarkerStepDegrees,
                 this.params.rotatingMinuteMarkerSpacingDegrees,
                 this.params.numberOfMarksForMinutesOnRotatingDial,
-                this.rotatingDialAngleDegreesForDate(this.time.dateAtMinuteStart)
+                this.rotatingDialAngleDegreesForDate(this.time.dateAtMinuteStart),
+                this.rotatingMinuteMarkerPhaseDegrees
             );
         },
         get alignedRotatingHourMarkerIndex() {
@@ -284,8 +294,18 @@ function createClockApp() {
                 this.fixedHourMarkerAngleDegrees(this.time.hours % this.params.numberOfHours),
                 this.params.rotatingHourMarkerSpacingDegrees,
                 this.params.numberOfMarksForHoursOnRotatingDial,
-                this.rotatingDialAngleDegreesForDate(this.time.dateAtHourStart)
+                this.rotatingDialAngleDegreesForDate(this.time.dateAtHourStart),
+                this.rotatingHourMarkerPhaseDegrees
             );
+        },
+        get isCurrentBestAlignment() {
+            return this.params.alignmentMode === "currentBest";
+        },
+        get rotatingMinuteMarkerPhaseDegrees() {
+            return this.isCurrentBestAlignment ? -this.params.rotatingDialDegreesPerMinute / 2 : 0;
+        },
+        get rotatingHourMarkerPhaseDegrees() {
+            return this.isCurrentBestAlignment ? -this.params.rotatingDialDegreesPerHour / 2 : 0;
         },
         get selectedParamPreset() {
             return Object.keys(PARAM_PRESETS).find(option => this.paramPresetMatches(option)) || null;
@@ -483,6 +503,12 @@ function createClockApp() {
                 return 0;
             }
             return (hourIndex - this.params.numberOfHours) * this.params.fixedHourMarkerStepDegrees;
+        },
+        rotatingMinuteMarkerAngleDegrees(markerIndex) {
+            return markerIndex * this.params.rotatingMinuteMarkerSpacingDegrees + this.rotatingMinuteMarkerPhaseDegrees;
+        },
+        rotatingHourMarkerAngleDegrees(markerIndex) {
+            return markerIndex * this.params.rotatingHourMarkerSpacingDegrees + this.rotatingHourMarkerPhaseDegrees;
         },
 
         // Lifecycle.

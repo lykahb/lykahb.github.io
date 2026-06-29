@@ -83,6 +83,73 @@ async function expectCivilDelta(page, startArgs, endArgs, expectedSeconds) {
     expect(result.angleDelta).toBeCloseTo(expectedSeconds * result.degreesPerSecond, 9);
 }
 
+async function readAlignmentMetrics(page, timeInputValue, alignmentMode) {
+    return page.evaluate(({ timeInputValue, alignmentMode }) => {
+        const app = window.__noniusClockApp;
+        app.params.alignmentMode = alignmentMode;
+        app.manualTransitionTargetDate = null;
+        app.setDisplayedDate(new Date(timeInputValue));
+
+        const dialAngle = app.rotatingDialAngleDegreesForDate(app.time.date);
+        const angleError = (fixedAngle, rotatingMarkerAngle) => {
+            let difference = (fixedAngle - rotatingMarkerAngle) % 360;
+            if (difference > 180) {
+                difference -= 360;
+            } else if (difference < -180) {
+                difference += 360;
+            }
+            return Math.abs(difference);
+        };
+        const bestMinuteErrorForFixedAngle = fixedAngle => {
+            let bestError = Infinity;
+            for (let i = 0; i < app.params.numberOfMarksForMinutesOnRotatingDial; i++) {
+                bestError = Math.min(bestError, angleError(
+                    fixedAngle,
+                    app.rotatingMinuteMarkerAngleDegrees(i) + dialAngle
+                ));
+            }
+            return bestError;
+        };
+        const bestHourErrorForFixedAngle = fixedAngle => {
+            let bestError = Infinity;
+            for (let i = 0; i < app.params.numberOfMarksForHoursOnRotatingDial; i++) {
+                bestError = Math.min(bestError, angleError(
+                    fixedAngle,
+                    app.rotatingHourMarkerAngleDegrees(i) + dialAngle
+                ));
+            }
+            return bestError;
+        };
+        const currentMinute = app.time.minutes;
+        const previousMinute = (currentMinute + 59) % 60;
+        const nextMinute = (currentMinute + 1) % 60;
+        const currentHour = app.time.hours % app.params.numberOfHours;
+        const previousHour = (currentHour + app.params.numberOfHours - 1) % app.params.numberOfHours;
+        const nextHour = (currentHour + 1) % app.params.numberOfHours;
+        const currentMinuteFixedAngle = currentMinute * app.params.fixedMinuteMarkerStepDegrees;
+        const currentHourFixedAngle = app.fixedHourMarkerAngleDegrees(currentHour);
+
+        return {
+            minuteCurrentHighlightedError: angleError(
+                currentMinuteFixedAngle,
+                app.rotatingMinuteMarkerAngleDegrees(app.alignedRotatingMinuteMarkerIndex) + dialAngle
+            ),
+            minuteCurrentBestError: bestMinuteErrorForFixedAngle(currentMinuteFixedAngle),
+            minutePreviousBestError: bestMinuteErrorForFixedAngle(previousMinute * app.params.fixedMinuteMarkerStepDegrees),
+            minuteNextBestError: bestMinuteErrorForFixedAngle(nextMinute * app.params.fixedMinuteMarkerStepDegrees),
+            minuteHalfSweepDegrees: Math.abs(app.params.rotatingDialDegreesPerMinute) / 2,
+            hourCurrentHighlightedError: angleError(
+                currentHourFixedAngle,
+                app.rotatingHourMarkerAngleDegrees(app.alignedRotatingHourMarkerIndex) + dialAngle
+            ),
+            hourCurrentBestError: bestHourErrorForFixedAngle(currentHourFixedAngle),
+            hourPreviousBestError: bestHourErrorForFixedAngle(app.fixedHourMarkerAngleDegrees(previousHour)),
+            hourNextBestError: bestHourErrorForFixedAngle(app.fixedHourMarkerAngleDegrees(nextHour)),
+            hourHalfSweepDegrees: Math.abs(app.params.rotatingDialDegreesPerHour) / 2,
+        };
+    }, { timeInputValue, alignmentMode });
+}
+
 async function startMutationCapture(page) {
     await page.evaluate(() => {
         window.__noniusMutations = [];
@@ -234,6 +301,64 @@ test("week rotation preset advances one seventh of a turn per civil day", async 
 
     await expect(page.locator("#weekdayScale")).toBeVisible();
     await expect(page.locator(".weekdayName")).toHaveCount(7);
+
+    const result = await page.evaluate(() => {
+        const app = window.__noniusClockApp;
+        const monday = new Date(2026, 5, 22, 0, 0, 0);
+        const tuesday = new Date(2026, 5, 23, 0, 0, 0);
+        return {
+            mondayBoundaryAngleDegrees: app.weekdayBoundaryAngleDegrees(0),
+            weekdayDaySpanDegrees: app.weekdayDaySpanDegrees,
+            angleDelta: app.rotationSpanDegreesForSeconds(app.civilSeconds(tuesday) - app.civilSeconds(monday)),
+        };
+    });
+
+    expect(result.mondayBoundaryAngleDegrees).toBeCloseTo(0, 9);
+    expect(result.weekdayDaySpanDegrees).toBeCloseTo(360 / 7, 9);
+    expect(result.angleDelta).toBeCloseTo(360 / 7, 9);
+});
+
+test("current-best alignment mode makes the current interval most aligned at midpoint", async ({ page }) => {
+    await gotoClock(page);
+
+    const startExactMinuteStart = await readAlignmentMetrics(page, "2026-06-27T12:17:00", "startExact");
+    expect(startExactMinuteStart.minuteCurrentHighlightedError).toBeCloseTo(0, 9);
+
+    const currentBestMinuteStart = await readAlignmentMetrics(page, "2026-06-27T12:17:00", "currentBest");
+    expect(currentBestMinuteStart.minuteCurrentHighlightedError).toBeCloseTo(currentBestMinuteStart.minuteHalfSweepDegrees, 9);
+
+    const currentBestMinuteMidpoint = await readAlignmentMetrics(page, "2026-06-27T12:17:30", "currentBest");
+    expect(currentBestMinuteMidpoint.minuteCurrentHighlightedError).toBeCloseTo(0, 9);
+
+    const currentBestMinuteSecondHalf = await readAlignmentMetrics(page, "2026-06-27T12:17:45", "currentBest");
+    expect(currentBestMinuteSecondHalf.minuteCurrentBestError).toBeLessThan(currentBestMinuteSecondHalf.minutePreviousBestError);
+    expect(currentBestMinuteSecondHalf.minuteCurrentBestError).toBeLessThan(currentBestMinuteSecondHalf.minuteNextBestError);
+
+    const startExactHourStart = await readAlignmentMetrics(page, "2026-06-27T12:00:00", "startExact");
+    expect(startExactHourStart.hourCurrentHighlightedError).toBeCloseTo(0, 9);
+
+    const currentBestHourStart = await readAlignmentMetrics(page, "2026-06-27T12:00:00", "currentBest");
+    expect(currentBestHourStart.hourCurrentHighlightedError).toBeCloseTo(currentBestHourStart.hourHalfSweepDegrees, 9);
+
+    const currentBestHourMidpoint = await readAlignmentMetrics(page, "2026-06-27T12:30:00", "currentBest");
+    expect(currentBestHourMidpoint.hourCurrentHighlightedError).toBeCloseTo(0, 9);
+
+    const currentBestHourSecondHalf = await readAlignmentMetrics(page, "2026-06-27T12:45:00", "currentBest");
+    expect(currentBestHourSecondHalf.hourCurrentBestError).toBeLessThan(currentBestHourSecondHalf.hourPreviousBestError);
+    expect(currentBestHourSecondHalf.hourCurrentBestError).toBeLessThan(currentBestHourSecondHalf.hourNextBestError);
+});
+
+test("alignment mode is independent from presets and keeps weekday pointer at ring zero", async ({ page }) => {
+    await gotoClock(page);
+
+    await page.locator(".advanced-parameters > summary").click();
+    await page.getByLabel("current best").check();
+    await page.getByRole("button", { name: "Week rotation" }).click();
+    await page.locator("#showWeekdayRing").check();
+
+    await expect.poll(() => appValue(page, () => window.__noniusClockApp.params.alignmentMode)).toBe("currentBest");
+    await expect(page.locator(".isWeekdayPointer")).toHaveCount(1);
+    await expect(page.locator(".isWeekdayPointer")).toHaveAttribute("transform", "rotate(0 200 200)");
 
     const result = await page.evaluate(() => {
         const app = window.__noniusClockApp;

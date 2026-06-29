@@ -304,7 +304,7 @@
 
     #rotatingDial {
         transform-origin: center;
-        transition: transform 0.5s ease-in-out;
+        transition: transform 0.2s ease-in-out;
     }
 
     .hourMarker>line {
@@ -488,28 +488,33 @@
             <g clip-path="url(#rotatingMinuteMarkerClipPath)">
                 <use v-for="i in Array.from({length: params.numberOfMarksForMinutesOnRotatingDial}, (x, i) => i)"
                     href="#rotatingMinuteMarker"
-                    :transform="`rotate(${i * params.rotatingMinuteMarkerSpacingDegrees} ${centerCoordX} ${centerCoordY})`"
+                    :transform="`rotate(${rotatingMinuteMarkerAngleDegrees(i)} ${centerCoordX} ${centerCoordY})`"
                     class="rotatingMinuteMarker">
                 </use>
                 <use v-if="visuals.highlightAlignedMarkers"
                     href="#rotatingMinuteMarker"
                     class="rotatingMinuteMarker isMarkerHighlighted"
-                    :transform="`rotate(${alignedRotatingMinuteMarkerIndex * params.rotatingMinuteMarkerSpacingDegrees} ${centerCoordX} ${centerCoordY})`"></use>
+                    :transform="`rotate(${rotatingMinuteMarkerAngleDegrees(alignedRotatingMinuteMarkerIndex)} ${centerCoordX} ${centerCoordY})`"></use>
             </g>
             <g clip-path="url(#rotatingHourMarkerClipPath)">
                 <use href="#rotatingHourMarkerFirst"
-                    :transform="`rotate(0 ${centerCoordX} ${centerCoordY})`"
-                    :class="{'rotatingHourMarker': true, 'isFirstMarker': true, 'isWeekdayPointer': visuals.showWeekdayRing}">
+                    :transform="`rotate(${rotatingHourMarkerAngleDegrees(0)} ${centerCoordX} ${centerCoordY})`"
+                    :class="{'rotatingHourMarker': true, 'isFirstMarker': true, 'isWeekdayPointer': visuals.showWeekdayRing && !isCurrentBestAlignment}">
                 </use>
                 <use v-for="i in Array.from({length: Math.max(0, params.numberOfMarksForHoursOnRotatingDial - 1)}, (x, i) => i + 1)"
                     href="#rotatingHourMarker"
-                    :transform="`rotate(${i * params.rotatingHourMarkerSpacingDegrees} ${centerCoordX} ${centerCoordY})`"
+                    :transform="`rotate(${rotatingHourMarkerAngleDegrees(i)} ${centerCoordX} ${centerCoordY})`"
                     class="rotatingHourMarker">
+                </use>
+                <use v-if="visuals.showWeekdayRing && isCurrentBestAlignment"
+                    href="#rotatingHourMarkerFirst"
+                    :transform="`rotate(0 ${centerCoordX} ${centerCoordY})`"
+                    class="rotatingHourMarker isWeekdayPointer">
                 </use>
                 <use v-if="visuals.highlightAlignedMarkers"
                     href="#rotatingHourMarker"
                     class="rotatingHourMarker isMarkerHighlighted"
-                    :transform="`rotate(${alignedRotatingHourMarkerIndex * params.rotatingHourMarkerSpacingDegrees} ${centerCoordX} ${centerCoordY})`">
+                    :transform="`rotate(${rotatingHourMarkerAngleDegrees(alignedRotatingHourMarkerIndex)} ${centerCoordX} ${centerCoordY})`">
                 </use>
             </g>
         </g>
@@ -568,20 +573,27 @@
                 <summary>Advanced parameters</summary>
                 <div class="control-subsection">
                     <h5>General</h5>
+                    <div class="control-row">
+                        <label for="highlightAlignedMarkers">Highlight alignment:</label>
+                        <input id="highlightAlignedMarkers" class="checkbox-control" type="checkbox" v-model="visuals.highlightAlignedMarkers"/>
+                    </div>
+                    <div class="control-row choice-row">
+                        <span class="labelForInputGroup">Alignment style:</span>
+                        <div class="choice-grid">
+                            <label class="choice"><input type="radio" v-model="params.alignmentMode" value="startExact" />start exact</label>
+                            <label class="choice"><input type="radio" v-model="params.alignmentMode" value="currentBest" />current best</label>
+                        </div>
+                    </div>
+                    <div class="control-row">
+                        <label for="showWeekdayRing">Weekday scale:</label>
+                        <input id="showWeekdayRing" class="checkbox-control" type="checkbox" v-model="visuals.showWeekdayRing"/>
+                    </div>
                     <div class="control-row choice-row">
                         <span class="labelForInputGroup">Direction:</span>
                         <div class="choice-grid">
                             <label class="choice"><input type="radio" v-model="params.isRotatingClockwise" :value="true" />clockwise</label>
                             <label class="choice"><input type="radio" v-model="params.isRotatingClockwise" :value="false" />counter-clockwise</label>
                         </div>
-                    </div>
-                    <div class="control-row">
-                        <label for="highlightAlignedMarkers">Highlight alignment:</label>
-                        <input id="highlightAlignedMarkers" class="checkbox-control" type="checkbox" v-model="visuals.highlightAlignedMarkers"/>
-                    </div>
-                    <div class="control-row">
-                        <label for="showWeekdayRing">Weekday scale:</label>
-                        <input id="showWeekdayRing" class="checkbox-control" type="checkbox" v-model="visuals.showWeekdayRing"/>
                     </div>
                     <div class="control-row">
                         <label>Rotation period:</label>
