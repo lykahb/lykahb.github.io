@@ -283,7 +283,6 @@
         --clock-marker-strong: #657b83;
         --clock-highlight: #2c363a;
         --clock-weekday: var(--clock-ink);
-        --clock-weekday-separator: #859900;
         --clock-weekday-pointer: #b58900;
     }
 
@@ -367,17 +366,11 @@
 
     .weekdayName {
         fill: var(--clock-weekday);
-        font-size: 9px;
+        dominant-baseline: central;
+        font-size: 36px;
         font-weight: 800;
         letter-spacing: 0;
         stroke-width: 0.5px;
-    }
-
-    .weekdaySeparator {
-        fill: none;
-        stroke: var(--clock-weekday-separator);
-        stroke-linecap: round;
-        stroke-width: 1.2px;
     }
 
     .minuteMarker {
@@ -440,23 +433,6 @@
             <!-- SVG paints in DOM order; draw fills first, clipped markers next, and boundary strokes last. -->
             <circle class="outerDialCircleFill" :cx="centerCoordX" :cy="centerCoordY" :r="visuals.radiusOfOuterDial"></circle>
 
-            <g v-if="visuals.showWeekdayRing" id="weekdayScale">
-                <path id="weekdayTextPathClockwise"
-                    class="weekdayTextGuide"
-                    :d="circlePath(visuals.weekdayTextRadius, 1)"></path>
-                <path id="weekdayTextPathCounterclockwise"
-                    class="weekdayTextGuide"
-                    :d="circlePath(visuals.weekdayTextRadius, 0)"></path>
-                <path v-for="i in Array.from({length: WEEKDAYS.length + 1}, (x, i) => i)"
-                    class="weekdaySeparator"
-                    :d="weekdaySeparatorPath(i)"></path>
-                <text v-for="(day, i) in WEEKDAYS" class="weekdayName" text-anchor="middle">
-                    <textPath :href="weekdayTextPathHref(i)" :start-offset.camel="weekdayTextStartOffset(i)">
-                        {{ day }}
-                    </textPath>
-                </text>
-            </g>
-
             <g clip-path="url(#fixedMinuteMarkerClipPath)">
                 <g v-for="i in Array.from({length: 60}, (x, i) => i)"
                     :class="{minuteMarker: true, dividesByFive: (i % 5 === 0)}"
@@ -470,6 +446,23 @@
             </g>
 
             <circle class="outerDialCircleStroke" :cx="centerCoordX" :cy="centerCoordY" :r="visuals.radiusOfOuterDial"></circle>
+
+            <g v-if="visuals.showWeekdayRing" id="weekdayScale">
+                <path id="weekdayTextPathClockwise"
+                    class="weekdayTextGuide"
+                    :d="circlePath(visuals.weekdayTextRadius, 1)"></path>
+                <path id="weekdayTextPathCounterclockwise"
+                    class="weekdayTextGuide"
+                    :d="circlePath(visuals.weekdayTextRadius, 0)"></path>
+                <text v-for="(day, i) in WEEKDAYS" class="weekdayName" text-anchor="middle">
+                    <textPath :href="weekdayTextPathHref(i)"
+                        :start-offset.camel="weekdayTextStartOffset(i)"
+                        :text-length.camel="weekdayTextLength()"
+                        :length-adjust.camel="'spacingAndGlyphs'">
+                        {{ day }}
+                    </textPath>
+                </text>
+            </g>
 
             <g v-for="i in Array.from({length: 60}, (x, i) => i)"
                 :class="{minuteMarker: true, dividesByFive: (i % 5 === 0)}"

@@ -23,13 +23,13 @@ const PHI = 1.61803398875; // golden ratio
 const MARKER_OVERSHOOT = 4;
 
 const WEEKDAYS = [
-    "Monday",
-    "Tuesday",
-    "Wednesday",
-    "Thursday",
-    "Friday",
-    "Saturday",
-    "Sunday"
+    "MONDAY",
+    "TUESDAY",
+    "WEDNESDAY",
+    "THURSDAY",
+    "FRIDAY",
+    "SATURDAY",
+    "SUNDAY"
 ];
 
 const PARAM_PRESETS = {
@@ -232,7 +232,7 @@ function createClockApp() {
                 return this.radiusOfRotatingDial - this.radiusOfInnerFixedDial;
             },
             get weekdayTextRadius() {
-                return this.radiusOfRotatingDial + (this.radiusOfOuterDial - this.radiusOfRotatingDial) * 0.7;
+                return (this.radiusOfRotatingDial + this.radiusOfOuterDial) / 2;
             }
         },
 
@@ -475,18 +475,6 @@ function createClockApp() {
                 y: this.centerCoordY - radius * Math.cos(pointAngleRadians)
             };
         },
-        radialLinePath(innerRadius, outerRadius, angleDegrees) {
-            const inner = this.pointOnCircle(innerRadius, angleDegrees);
-            const outer = this.pointOnCircle(outerRadius, angleDegrees);
-            return `M${inner.x},${inner.y} L${outer.x},${outer.y}`;
-        },
-        weekdaySeparatorPath(dayIndex) {
-            return this.radialLinePath(
-                this.visuals.radiusOfRotatingDial,
-                this.visuals.radiusOfOuterDial,
-                this.weekdayBoundaryAngleDegrees(dayIndex)
-            );
-        },
         weekdayTextCenterAngleDegrees(dayIndex) {
             return this.weekdayBoundaryAngleDegrees(dayIndex)
                 + this.weekdayScaleDirection * this.weekdayDaySpanDegrees / 2;
@@ -502,6 +490,9 @@ function createClockApp() {
                 ? 360 - textCenterAngleDegrees
                 : textCenterAngleDegrees;
             return `${pathAngleDegrees / 360 * 100}%`;
+        },
+        weekdayTextLength() {
+            return this.visuals.weekdayTextRadius * this.weekdayDaySpanDegrees * Math.PI / 180;
         },
         isLowerHalfAngle(angleDegrees) {
             const normalizedAngleDegrees = normalizedDegrees(angleDegrees);

@@ -328,6 +328,16 @@ test("week rotation keeps lower weekday labels upright", async ({ page }) => {
     const result = await page.evaluate(() => {
         const arcSweepFlagPattern = / A[^ ]+,[^ ]+ 0 \d ([01]) /g;
         return {
+            layout: {
+                weekdayTextRadius: window.__noniusClockApp.visuals.weekdayTextRadius,
+                fixedMinuteRingCenterRadius: (
+                    window.__noniusClockApp.visuals.radiusOfRotatingDial
+                    + window.__noniusClockApp.visuals.radiusOfOuterDial
+                ) / 2,
+                weekdayTextLength: window.__noniusClockApp.weekdayTextLength(),
+                weekdayFontSize: getComputedStyle(document.querySelector(".weekdayName")).fontSize,
+                weekdayDominantBaseline: getComputedStyle(document.querySelector(".weekdayName")).dominantBaseline,
+            },
             textGuides: Array.from(document.querySelectorAll(".weekdayTextGuide"), path => ({
                 id: path.id,
                 sweepFlags: Array.from(path.getAttribute("d").matchAll(arcSweepFlagPattern), match => match[1]),
@@ -337,6 +347,9 @@ test("week rotation keeps lower weekday labels upright", async ({ page }) => {
                 const startOffset = textPath.startOffset?.baseVal?.valueAsString
                     || textPath.getAttribute("startOffset")
                     || textPath.getAttribute("startoffset");
+                const textLength = textPath.textLength?.baseVal?.value
+                    || Number.parseFloat(textPath.getAttribute("textLength") || textPath.getAttribute("textlength"));
+                const lengthAdjust = textPath.getAttribute("lengthAdjust") || textPath.getAttribute("lengthadjust");
                 return {
                     day: text.textContent.trim(),
                     isLowerHalf: window.__noniusClockApp.isLowerHalfAngle(
@@ -344,24 +357,35 @@ test("week rotation keeps lower weekday labels upright", async ({ page }) => {
                     ),
                     href: textPath.getAttribute("href"),
                     startOffsetPercent: Number.parseFloat(startOffset),
+                    textLength,
+                    lengthAdjust,
+                    renderedTextLength: text.getComputedTextLength(),
                 };
             }),
         };
     });
 
+    expect(result.layout.weekdayTextRadius).toBeCloseTo(result.layout.fixedMinuteRingCenterRadius, 9);
+    expect(result.layout.weekdayFontSize).toBe("36px");
+    expect(result.layout.weekdayDominantBaseline).toBe("central");
     expect(result.textGuides).toEqual([
         { id: "weekdayTextPathClockwise", sweepFlags: ["1", "1"] },
         { id: "weekdayTextPathCounterclockwise", sweepFlags: ["0", "0"] },
     ]);
     expect(result.labels.map(({ day, isLowerHalf, href }) => ({ day, isLowerHalf, href }))).toEqual([
-        { day: "Monday", isLowerHalf: false, href: "#weekdayTextPathClockwise" },
-        { day: "Tuesday", isLowerHalf: false, href: "#weekdayTextPathClockwise" },
-        { day: "Wednesday", isLowerHalf: true, href: "#weekdayTextPathCounterclockwise" },
-        { day: "Thursday", isLowerHalf: true, href: "#weekdayTextPathCounterclockwise" },
-        { day: "Friday", isLowerHalf: true, href: "#weekdayTextPathCounterclockwise" },
-        { day: "Saturday", isLowerHalf: false, href: "#weekdayTextPathClockwise" },
-        { day: "Sunday", isLowerHalf: false, href: "#weekdayTextPathClockwise" },
+        { day: "MONDAY", isLowerHalf: false, href: "#weekdayTextPathClockwise" },
+        { day: "TUESDAY", isLowerHalf: false, href: "#weekdayTextPathClockwise" },
+        { day: "WEDNESDAY", isLowerHalf: true, href: "#weekdayTextPathCounterclockwise" },
+        { day: "THURSDAY", isLowerHalf: true, href: "#weekdayTextPathCounterclockwise" },
+        { day: "FRIDAY", isLowerHalf: true, href: "#weekdayTextPathCounterclockwise" },
+        { day: "SATURDAY", isLowerHalf: false, href: "#weekdayTextPathClockwise" },
+        { day: "SUNDAY", isLowerHalf: false, href: "#weekdayTextPathClockwise" },
     ]);
+    result.labels.forEach(label => {
+        expect(label.lengthAdjust).toBe("spacingAndGlyphs");
+        expect(label.textLength).toBeCloseTo(result.layout.weekdayTextLength, 4);
+        expect(label.renderedTextLength).toBeCloseTo(result.layout.weekdayTextLength, 1);
+    });
     [
         100 / 14,
         300 / 14,
