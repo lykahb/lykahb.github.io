@@ -17,7 +17,6 @@
     }
 
     #clock {
-        font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
         width: 100%;
         height: auto;
         aspect-ratio: 1;
@@ -283,19 +282,18 @@
         --clock-marker: #93a1a1;
         --clock-marker-strong: #657b83;
         --clock-highlight: #2c363a;
-        --clock-weekday: #268bd2;
+        --clock-weekday: var(--clock-ink);
         --clock-weekday-separator: #859900;
         --clock-weekday-pointer: #b58900;
     }
 
     #clock text {
+        font-family: "Gill Sans MT", Helvetica, Arial, Calibri, "Trebuchet MS", ui-rounded, sans-serif;
         fill: var(--clock-ink);
-        font-family: ui-rounded, "Avenir Next", "Gill Sans", "Gill Sans MT", Calibri, sans-serif;
-        font-weight: 800;
-        paint-order: stroke;
-        stroke: var(--clock-paper);
-        stroke-linejoin: round;
-        stroke-width: 0.8px;
+    }
+
+    .hourMarker text, .minuteMarker text {
+        font-weight: 600;
     }
 
     #innerDial {
@@ -370,6 +368,7 @@
     .weekdayName {
         fill: var(--clock-weekday);
         font-size: 9px;
+        font-weight: 800;
         letter-spacing: 0;
         stroke-width: 0.5px;
     }
@@ -387,7 +386,6 @@
 
     .hourMarker {
         font-size: 10px;
-        font-weight: 800;
     }
 
     .isMarkerHighlighted {
