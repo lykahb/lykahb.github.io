@@ -291,7 +291,7 @@
         fill: var(--clock-ink);
     }
 
-    .hourMarker text, .minuteMarker text {
+    .hourNumeral text, .minuteNumeral text {
         font-weight: 600;
     }
 
@@ -324,18 +324,26 @@
         fill: var(--clock-weekday-pointer);
     }
 
-    .fixedHourMarkerCircle {
+    .hourNumeral > circle {
         r: 8px;
         stroke: var(--clock-ink);
         fill: var(--clock-paper);
         stroke-width: 2.4px;
     }
 
-    .fixedMinuteMarkerCircle {
+    .hourNumeral {
+        font-size: 10px;
+    }
+
+    .minuteNumeral > circle {
         r: 13px;
         stroke: var(--clock-ink);
         fill: var(--clock-paper);
         stroke-width: 2.4px;
+    }
+
+    .minuteNumeral {
+        font-size: 17px;
     }
 
     .rotatingDialInnerCircleStroke,
@@ -369,14 +377,6 @@
         font-weight: 800;
         letter-spacing: 0;
         stroke-width: 0.5px;
-    }
-
-    .minuteMarker {
-        font-size: 17px;
-    }
-
-    .hourMarker {
-        font-size: 10px;
     }
 
     .isMarkerHighlighted {
@@ -433,7 +433,7 @@
 
             <g clip-path="url(#fixedMinuteMarkerClipPath)">
                 <g v-for="i in Array.from({length: 60}, (x, i) => i)"
-                    :class="{minuteMarker: true, dividesByFive: (i % 5 === 0)}"
+                    class="minuteMarker"
                     :transform="`rotate(${i * params.fixedMinuteMarkerStepDegrees} ${centerCoordX} ${centerCoordY})`">
                     <use href="#fixedMinuteMarker" class="fixedMinuteMarker"></use>
                 </g>
@@ -462,11 +462,12 @@
                 </text>
             </g>
 
-            <g v-for="i in Array.from({length: 60}, (x, i) => i)"
-                :class="{minuteMarker: true, dividesByFive: (i % 5 === 0)}"
+            <g v-for="i in visuals.minutesWithNumerals"
+                :key="i"
+                class="minuteNumeral"
                 :transform="`rotate(${i * params.fixedMinuteMarkerStepDegrees} ${centerCoordX} ${centerCoordY})`">
-                <circle v-if="i % visuals.minuteLabelEvery === 0 || visuals.minuteLabel59 && i == 59" class="fixedMinuteMarkerCircle" :cx="centerCoordX" :cy="centerCoordY - visuals.radiusOfOuterDial + (visuals.radiusOfOuterDial - visuals.radiusOfRotatingDial) / 2"></circle>
-                <text v-if="i % visuals.minuteLabelEvery === 0 || visuals.minuteLabel59 && i == 59" :x="centerCoordX" :y="centerCoordY - visuals.radiusOfOuterDial + (visuals.radiusOfOuterDial - visuals.radiusOfRotatingDial) / 2"
+                <circle :cx="centerCoordX" :cy="centerCoordY - visuals.radiusOfOuterDial + (visuals.radiusOfOuterDial - visuals.radiusOfRotatingDial) / 2"></circle>
+                <text :x="centerCoordX" :y="centerCoordY - visuals.radiusOfOuterDial + (visuals.radiusOfOuterDial - visuals.radiusOfRotatingDial) / 2"
                     text-anchor="middle" dominant-baseline="central"
                     :transform="`rotate(${-i * params.fixedMinuteMarkerStepDegrees} ${centerCoordX} ${centerCoordY - visuals.radiusOfOuterDial + (visuals.radiusOfOuterDial - visuals.radiusOfRotatingDial) / 2})`">
                     {{ i }}
@@ -525,9 +526,9 @@
         <circle :cx="centerCoordX" :cy="centerCoordY" :r="visuals.radiusOfInnerFixedDial" class="rotatingDialInnerCircleStroke"></circle>
         <g id="innerHourDial">
             <g v-for="i in Array.from({length: params.numberOfHours}, (x, i) => i)"
-                class="hourMarker"
+                class="hourNumeral"
                 :transform="`rotate(${fixedHourMarkerAngleDegrees(i)} ${centerCoordX} ${centerCoordY})`">
-                <circle class="fixedHourMarkerCircle" :cx="centerCoordX"
+                <circle :cx="centerCoordX"
                     :cy="centerCoordY - visuals.radiusOfInnerFixedDial + (visuals.radiusOfInnerFixedDial * (1 - 1 / PHI)) / 2"></circle>
                 <text :x="centerCoordX" :y="centerCoordY - visuals.radiusOfInnerFixedDial + (visuals.radiusOfInnerFixedDial * (1 - 1 / PHI)) / 2"
                     text-anchor="middle" dominant-baseline="central"
@@ -640,14 +641,14 @@
                             @input="setNumberInputValue($event, params, 'spacingMultipleForFixedMinuteMarks')">
                     </div>
                     <div class="control-row">
-                        <label for="minuteLabelEvery">Labels every:</label>
-                        <input id="minuteLabelEvery" type="number" min="1" max="60" required
-                            :value="visuals.minuteLabelEvery"
-                            @input="setNumberInputValue($event, visuals, 'minuteLabelEvery')"/>
+                        <label for="minuteNumeralEvery">Numerals every:</label>
+                        <input id="minuteNumeralEvery" type="number" min="1" max="60" required
+                            :value="visuals.minuteNumeralEvery"
+                            @input="setNumberInputValue($event, visuals, 'minuteNumeralEvery')"/>
                     </div>
                     <div class="control-row">
-                        <label for="minuteLabel59">Show 59:</label>
-                        <input id="minuteLabel59" class="checkbox-control" type="checkbox" v-model="visuals.minuteLabel59"/>
+                        <label for="minuteNumeral59">Show 59:</label>
+                        <input id="minuteNumeral59" class="checkbox-control" type="checkbox" v-model="visuals.minuteNumeral59"/>
                     </div>
                     <div class="control-row">
                         <label for="minuteMarkerThicknessFactor">Marker thickness:</label>

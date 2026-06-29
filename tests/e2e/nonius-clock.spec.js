@@ -517,10 +517,10 @@ test("invalid numeric controls keep the previous clock state", async ({ page }) 
             readState: () => window.__noniusClockApp.params.spacingMultipleForFixedMinuteMarks,
         },
         {
-            selector: "#minuteLabelEvery",
+            selector: "#minuteNumeralEvery",
             invalidValue: "61",
             validValue: "10",
-            readState: () => window.__noniusClockApp.visuals.minuteLabelEvery,
+            readState: () => window.__noniusClockApp.visuals.minuteNumeralEvery,
         },
         {
             selector: "#minuteMarkerThicknessFactor",

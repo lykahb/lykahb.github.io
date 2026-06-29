@@ -39,8 +39,8 @@ const PARAM_PRESETS = {
         areFixedHoursShorter: false,
         areFixedMinutesShorter: true,
         spacingMultipleForFixedMinuteMarks: 1,
-        minuteLabelEvery: 5,
-        minuteLabel59: true,
+        minuteNumeralEvery: 5,
+        minuteNumeral59: true,
         showWeekdayRing: false
     },
     chaoticMinutes: {
@@ -49,8 +49,8 @@ const PARAM_PRESETS = {
         areFixedHoursShorter: false,
         areFixedMinutesShorter: false,
         spacingMultipleForFixedMinuteMarks: 1,
-        minuteLabelEvery: 1,
-        minuteLabel59: false,
+        minuteNumeralEvery: 1,
+        minuteNumeral59: false,
         showWeekdayRing: false
     },
     chaoticHoursMinuteGap: {
@@ -59,8 +59,8 @@ const PARAM_PRESETS = {
         areFixedHoursShorter: true,
         areFixedMinutesShorter: false,
         spacingMultipleForFixedMinuteMarks: 1,
-        minuteLabelEvery: 5,
-        minuteLabel59: true,
+        minuteNumeralEvery: 5,
+        minuteNumeral59: true,
         showWeekdayRing: false
     },
     oneWeekRotation: {
@@ -69,8 +69,8 @@ const PARAM_PRESETS = {
         areFixedHoursShorter: false,
         areFixedMinutesShorter: false,
         spacingMultipleForFixedMinuteMarks: 2,
-        minuteLabelEvery: 5,
-        minuteLabel59: true,
+        minuteNumeralEvery: 5,
+        minuteNumeral59: true,
         showWeekdayRing: true
     }
 };
@@ -221,8 +221,8 @@ function createClockApp() {
         visuals: {
             viewPortSize: 400,
             radiusOfOuterDial: 198,
-            minuteLabelEvery: 5,
-            minuteLabel59: false,
+            minuteNumeralEvery: 5,
+            minuteNumeral59: false,
             minuteMarkerThicknessFactor: 10,
             highlightAlignedMarkers: true,
             showWeekdayRing: false,
@@ -241,6 +241,10 @@ function createClockApp() {
             },
             get weekdayTextRadius() {
                 return (this.radiusOfRotatingDial + this.radiusOfOuterDial) / 2;
+            },
+            get minutesWithNumerals() {
+                return Array.from({length: 60}, (x, i) => i)
+                    .filter(i => i % this.minuteNumeralEvery == 0 || (this.minuteNumeral59 && i == 59))
             }
         },
 
@@ -408,8 +412,8 @@ function createClockApp() {
             this.params.areFixedHoursShorter = preset.areFixedHoursShorter;
             this.params.areFixedMinutesShorter = preset.areFixedMinutesShorter;
             this.params.spacingMultipleForFixedMinuteMarks = preset.spacingMultipleForFixedMinuteMarks;
-            this.visuals.minuteLabelEvery = preset.minuteLabelEvery;
-            this.visuals.minuteLabel59 = preset.minuteLabel59;
+            this.visuals.minuteNumeralEvery = preset.minuteNumeralEvery;
+            this.visuals.minuteNumeral59 = preset.minuteNumeral59;
             this.visuals.showWeekdayRing = preset.showWeekdayRing;
         },
         isSelectedParamPreset(option) {
@@ -423,8 +427,8 @@ function createClockApp() {
                 && this.params.areFixedHoursShorter === preset.areFixedHoursShorter
                 && this.params.areFixedMinutesShorter === preset.areFixedMinutesShorter
                 && this.params.spacingMultipleForFixedMinuteMarks === preset.spacingMultipleForFixedMinuteMarks
-                && this.visuals.minuteLabelEvery === preset.minuteLabelEvery
-                && this.visuals.minuteLabel59 === preset.minuteLabel59
+                && this.visuals.minuteNumeralEvery === preset.minuteNumeralEvery
+                && this.visuals.minuteNumeral59 === preset.minuteNumeral59
                 && this.visuals.showWeekdayRing === preset.showWeekdayRing;
         },
         runManualTimeChange(changeTime) {
