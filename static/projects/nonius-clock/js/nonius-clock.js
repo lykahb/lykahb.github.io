@@ -125,6 +125,10 @@ function civilSeconds(date) {
         + civilSecondsWithinDay(date);
 }
 
+function normalizedDegrees(angleDegrees) {
+    return ((angleDegrees % 360) + 360) % 360;
+}
+
 function rotationTransform(angleDegrees) {
     // Keep the logical angle unbounded and civil-time based, but do not
     // pass huge values such as rotate(-2970144.3) to the browser. When
@@ -493,7 +497,19 @@ function createClockApp() {
             const daySpanDegrees = this.weekdayDaySpanDegrees;
             const textSpanDegrees = Math.min(Math.max(daySpanDegrees * 0.84, 24), 150);
             const textCenterAngleDegrees = this.weekdayBoundaryAngleDegrees(dayIndex) + this.weekdayScaleDirection * daySpanDegrees / 2;
-            return this.arcPath(this.visuals.weekdayTextRadius, textCenterAngleDegrees - textSpanDegrees / 2, textCenterAngleDegrees + textSpanDegrees / 2);
+            const textStartAngleDegrees = textCenterAngleDegrees - textSpanDegrees / 2;
+            const textEndAngleDegrees = textCenterAngleDegrees + textSpanDegrees / 2;
+
+            // SVG text follows the path direction, so reverse lower-half labels
+            // to keep them readable instead of upside down.
+            if (this.isLowerHalfAngle(textCenterAngleDegrees)) {
+                return this.arcPath(this.visuals.weekdayTextRadius, textEndAngleDegrees, textStartAngleDegrees);
+            }
+            return this.arcPath(this.visuals.weekdayTextRadius, textStartAngleDegrees, textEndAngleDegrees);
+        },
+        isLowerHalfAngle(angleDegrees) {
+            const normalizedAngleDegrees = normalizedDegrees(angleDegrees);
+            return normalizedAngleDegrees > 90 && normalizedAngleDegrees < 270;
         },
         weekdayBoundaryAngleDegrees(dayIndex) {
             return this.weekdayScaleDirection * dayIndex * this.weekdayDaySpanDegrees;

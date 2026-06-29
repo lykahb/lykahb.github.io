@@ -318,6 +318,42 @@ test("week rotation preset advances one seventh of a turn per civil day", async 
     expect(result.angleDelta).toBeCloseTo(360 / 7, 9);
 });
 
+test("week rotation keeps lower weekday labels upright", async ({ page }) => {
+    await gotoClock(page);
+
+    await page.locator(".advanced-parameters > summary").click();
+    await page.locator("#showWeekdayRing").check();
+    await page.getByRole("button", { name: "Week rotation" }).click();
+
+    const result = await page.evaluate(() => {
+        const sweepFlagPattern = / A[^ ]+,[^ ]+ 0 \d ([01]) /;
+        return {
+            lowerHalfByDay: Array.from(document.querySelectorAll(".weekdayName"), (text, index) => ({
+                day: text.textContent.trim(),
+                isLowerHalf: window.__noniusClockApp.isLowerHalfAngle(
+                    window.__noniusClockApp.weekdayBoundaryAngleDegrees(index)
+                        + window.__noniusClockApp.weekdayScaleDirection
+                            * window.__noniusClockApp.weekdayDaySpanDegrees / 2
+                ),
+            })),
+            sweepFlags: Array.from(document.querySelectorAll(".weekdayTextGuide"), path => {
+                return path.getAttribute("d").match(sweepFlagPattern)?.[1];
+            }),
+        };
+    });
+
+    expect(result.lowerHalfByDay).toEqual([
+        { day: "Monday", isLowerHalf: false },
+        { day: "Tuesday", isLowerHalf: false },
+        { day: "Wednesday", isLowerHalf: true },
+        { day: "Thursday", isLowerHalf: true },
+        { day: "Friday", isLowerHalf: true },
+        { day: "Saturday", isLowerHalf: false },
+        { day: "Sunday", isLowerHalf: false },
+    ]);
+    expect(result.sweepFlags).toEqual(["1", "1", "0", "0", "0", "1", "1"]);
+});
+
 test("current-best alignment mode makes the current interval most aligned at midpoint", async ({ page }) => {
     await gotoClock(page);
 
