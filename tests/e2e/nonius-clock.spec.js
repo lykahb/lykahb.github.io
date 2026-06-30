@@ -341,19 +341,44 @@ test("week rotation keeps lower weekday labels upright", async ({ page }) => {
                 weekdayDominantBaseline: getComputedStyle(document.querySelector(".weekdayName")).dominantBaseline,
                 hourNumeralCircleCount: document.querySelectorAll(".hourNumeral circle").length,
                 minuteNumeralCircleCount: document.querySelectorAll(".minuteNumeral circle").length,
+                numeralCounterPatchCount: document.querySelectorAll(".numeralCounterPatch").length,
             },
-            hourNumerals: Array.from(document.querySelectorAll(".hourNumeral text"), text => {
+            numeralInteriorFillFilter: {
+                filterRegion: {
+                    x: document.querySelector("#numeralInteriorFill").getAttribute("x"),
+                    y: document.querySelector("#numeralInteriorFill").getAttribute("y"),
+                    width: document.querySelector("#numeralInteriorFill").getAttribute("width"),
+                    height: document.querySelector("#numeralInteriorFill").getAttribute("height"),
+                },
+                morphology: Array.from(document.querySelectorAll("#numeralInteriorFill feMorphology"), element => ({
+                    operator: element.getAttribute("operator"),
+                    radius: element.getAttribute("radius"),
+                    input: element.getAttribute("in"),
+                    result: element.getAttribute("result"),
+                })),
+                flood: {
+                    style: document.querySelector("#numeralInteriorFill feFlood").getAttribute("style"),
+                },
+                composite: {
+                    operator: document.querySelector("#numeralInteriorFill feComposite").getAttribute("operator"),
+                    input: document.querySelector("#numeralInteriorFill feComposite").getAttribute("in"),
+                    input2: document.querySelector("#numeralInteriorFill feComposite").getAttribute("in2"),
+                },
+            },
+            numeralInteriorFills: Array.from(document.querySelectorAll(".hourNumeral .numeralInteriorFill, .minuteNumeral .numeralInteriorFill"), text => {
                 const style = getComputedStyle(text);
                 return {
+                    filter: text.getAttribute("filter"),
+                    fill: style.fill,
                     stroke: style.stroke,
-                    strokeWidth: style.strokeWidth,
-                    paintOrder: style.paintOrder,
                 };
             }),
-            minuteNumerals: Array.from(document.querySelectorAll(".minuteNumeral text"), text => {
+            numeralTexts: Array.from(document.querySelectorAll(".hourNumeral .numeralText, .minuteNumeral .numeralText"), text => {
                 const style = getComputedStyle(text);
                 return {
+                    fill: style.fill,
                     stroke: style.stroke,
+                    strokeLineJoin: style.strokeLinejoin,
                     strokeWidth: style.strokeWidth,
                     paintOrder: style.paintOrder,
                 };
@@ -391,13 +416,42 @@ test("week rotation keeps lower weekday labels upright", async ({ page }) => {
     expect(result.layout.weekdayDominantBaseline).toBe("central");
     expect(result.layout.hourNumeralCircleCount).toBe(0);
     expect(result.layout.minuteNumeralCircleCount).toBe(0);
-    result.hourNumerals.forEach(numeral => {
-        expect(numeral.stroke).not.toBe("none");
-        expect(numeral.strokeWidth).toBe("4px");
-        expect(numeral.paintOrder).toContain("stroke");
+    expect(result.layout.numeralCounterPatchCount).toBe(0);
+    expect(result.numeralInteriorFillFilter.filterRegion).toEqual({
+        x: "-40%",
+        y: "-80%",
+        width: "180%",
+        height: "260%",
     });
-    result.minuteNumerals.forEach(numeral => {
+    expect(result.numeralInteriorFillFilter.morphology).toEqual([
+        {
+            operator: "dilate",
+            radius: "2",
+            input: "SourceAlpha",
+            result: "dilated",
+        },
+        {
+            operator: "erode",
+            radius: "2",
+            input: "dilated",
+            result: "closed",
+        },
+    ]);
+    expect(result.numeralInteriorFillFilter.flood.style).toContain("flood-color: var(--clock-paper)");
+    expect(result.numeralInteriorFillFilter.composite).toEqual({
+        operator: "in",
+        input: "paper",
+        input2: "closed",
+    });
+    result.numeralInteriorFills.forEach(numeral => {
+        expect(numeral.filter).toBe("url(#numeralInteriorFill)");
+        expect(numeral.fill).not.toBe("none");
+        expect(numeral.stroke).toBe("none");
+    });
+    result.numeralTexts.forEach(numeral => {
+        expect(numeral.fill).not.toBe("none");
         expect(numeral.stroke).not.toBe("none");
+        expect(numeral.strokeLineJoin).toBe("round");
         expect(numeral.strokeWidth).toBe("4px");
         expect(numeral.paintOrder).toContain("stroke");
     });
@@ -731,7 +785,7 @@ test("zero minute numeral is hidden by default and can be shown", async ({ page 
     await expect(page.locator("#minuteNumeral59")).not.toBeChecked();
 
     const minuteLabels = () => Array.from(
-        document.querySelectorAll(".minuteNumeral text"),
+        document.querySelectorAll(".minuteNumeral .numeralText"),
         text => text.textContent.trim()
     );
 

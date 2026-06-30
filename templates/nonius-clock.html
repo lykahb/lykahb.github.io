@@ -435,8 +435,16 @@
         font-size: 12px;
     }
 
-    .hourNumeral text,
-    .minuteNumeral text {
+    #clock .hourNumeral .numeralInteriorFill,
+    #clock .minuteNumeral .numeralInteriorFill {
+        /* The filter uses SourceAlpha, so this text needs an opaque fill.
+           The visible paper color comes from the filter's feFlood. */
+        fill: #000;
+        stroke: none;
+    }
+
+    #clock .hourNumeral .numeralText,
+    #clock .minuteNumeral .numeralText {
         fill: var(--clock-ink);
         stroke: var(--clock-paper);
         stroke-linejoin: round;
@@ -534,6 +542,16 @@
             <clipPath id="weekdayPointerClipPath">
                 <path :d="ringClipPath(visuals.rotatingHourMarkerOuterRadius, visuals.radiusOfRotatingDial)" clip-rule="evenodd"></path>
             </clipPath>
+            <!-- The visible numeral halo uses a rounded SVG text stroke because that has the
+                 cleanest outside shape. This filter only creates a paper backing from closed
+                 glyph alpha so hour and minute markers do not show as dots through counters 
+                 with closed curves like 6, 8, and 9. -->
+            <filter id="numeralInteriorFill" x="-40%" y="-80%" width="180%" height="260%" color-interpolation-filters="sRGB">
+                <feMorphology in="SourceAlpha" operator="dilate" radius="2" result="dilated"></feMorphology>
+                <feMorphology in="dilated" operator="erode" radius="2" result="closed"></feMorphology>
+                <feFlood style="flood-color: var(--clock-paper)" result="paper"></feFlood>
+                <feComposite in="paper" in2="closed" operator="in"></feComposite>
+            </filter>
             <path id="rotatingMinuteMarker"
                 :d="markerPath(visuals.radiusOfInnerFixedDial, visuals.radiusOfRotatingDial, visuals.minuteMarkerThicknessFactor * Math.abs(params.rotatingDialDegreesPerMinute), false)"></path>
             <path id="fixedMinuteMarker"
@@ -587,7 +605,14 @@
                 :key="i"
                 class="minuteNumeral"
                 :transform="`rotate(${i * params.fixedMinuteMarkerStepDegrees} ${centerCoordX} ${centerCoordY})`">
-                <text :x="centerCoordX" :y="centerCoordY - visuals.radiusOfOuterDial + (visuals.radiusOfOuterDial - visuals.radiusOfRotatingDial) / 2"
+                <text class="numeralInteriorFill" aria-hidden="true" filter="url(#numeralInteriorFill)"
+                    :x="centerCoordX" :y="centerCoordY - visuals.radiusOfOuterDial + (visuals.radiusOfOuterDial - visuals.radiusOfRotatingDial) / 2"
+                    text-anchor="middle" dominant-baseline="central"
+                    :transform="`rotate(${-i * params.fixedMinuteMarkerStepDegrees} ${centerCoordX} ${centerCoordY - visuals.radiusOfOuterDial + (visuals.radiusOfOuterDial - visuals.radiusOfRotatingDial) / 2})`">
+                    {{ i }}
+                </text>
+                <text class="numeralText"
+                    :x="centerCoordX" :y="centerCoordY - visuals.radiusOfOuterDial + (visuals.radiusOfOuterDial - visuals.radiusOfRotatingDial) / 2"
                     text-anchor="middle" dominant-baseline="central"
                     :transform="`rotate(${-i * params.fixedMinuteMarkerStepDegrees} ${centerCoordX} ${centerCoordY - visuals.radiusOfOuterDial + (visuals.radiusOfOuterDial - visuals.radiusOfRotatingDial) / 2})`">
                     {{ i }}
@@ -652,7 +677,14 @@
             <g v-for="i in Array.from({length: params.numberOfHours}, (x, i) => i)"
                 class="hourNumeral"
                 :transform="`rotate(${fixedHourMarkerAngleDegrees(i)} ${centerCoordX} ${centerCoordY})`">
-                <text :x="centerCoordX" :y="centerCoordY - visuals.radiusOfInnerFixedDial + (visuals.radiusOfInnerFixedDial * (1 - 1 / PHI)) / 2"
+                <text class="numeralInteriorFill" aria-hidden="true" filter="url(#numeralInteriorFill)"
+                    :x="centerCoordX" :y="centerCoordY - visuals.radiusOfInnerFixedDial + (visuals.radiusOfInnerFixedDial * (1 - 1 / PHI)) / 2"
+                    text-anchor="middle" dominant-baseline="central"
+                    :transform="`rotate(${-fixedHourMarkerAngleDegrees(i)} ${centerCoordX} ${centerCoordY - visuals.radiusOfInnerFixedDial + (visuals.radiusOfInnerFixedDial * (1 - 1 / PHI)) / 2})`">
+                    {{ i == 0 ? params.numberOfHours : i }}
+                </text>
+                <text class="numeralText"
+                    :x="centerCoordX" :y="centerCoordY - visuals.radiusOfInnerFixedDial + (visuals.radiusOfInnerFixedDial * (1 - 1 / PHI)) / 2"
                     text-anchor="middle" dominant-baseline="central"
                     :transform="`rotate(${-fixedHourMarkerAngleDegrees(i)} ${centerCoordX} ${centerCoordY - visuals.radiusOfInnerFixedDial + (visuals.radiusOfInnerFixedDial * (1 - 1 / PHI)) / 2})`">
                     {{ i == 0 ? params.numberOfHours : i }}
