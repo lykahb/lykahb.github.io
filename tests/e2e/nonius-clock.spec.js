@@ -339,6 +339,7 @@ test("week rotation keeps lower weekday labels upright", async ({ page }) => {
                 weekdayFontSize: getComputedStyle(document.querySelector(".weekdayName")).fontSize,
                 weekdayDominantBaseline: getComputedStyle(document.querySelector(".weekdayName")).dominantBaseline,
             },
+            weekdayNames: WEEKDAYS,
             textGuides: Array.from(document.querySelectorAll(".weekdayTextGuide"), path => ({
                 id: path.id,
                 sweepFlags: Array.from(path.getAttribute("d").matchAll(arcSweepFlagPattern), match => match[1]),
@@ -373,15 +374,13 @@ test("week rotation keeps lower weekday labels upright", async ({ page }) => {
         { id: "weekdayTextPathClockwise", sweepFlags: ["1", "1"] },
         { id: "weekdayTextPathCounterclockwise", sweepFlags: ["0", "0"] },
     ]);
-    expect(result.labels.map(({ day, isLowerHalf, href }) => ({ day, isLowerHalf, href }))).toEqual([
-        { day: "MONDAY", isLowerHalf: false, href: "#weekdayTextPathClockwise" },
-        { day: "TUESDAY", isLowerHalf: false, href: "#weekdayTextPathClockwise" },
-        { day: "WEDNESDAY", isLowerHalf: true, href: "#weekdayTextPathCounterclockwise" },
-        { day: "THURSDAY", isLowerHalf: true, href: "#weekdayTextPathCounterclockwise" },
-        { day: "FRIDAY", isLowerHalf: true, href: "#weekdayTextPathCounterclockwise" },
-        { day: "SATURDAY", isLowerHalf: false, href: "#weekdayTextPathClockwise" },
-        { day: "SUNDAY", isLowerHalf: false, href: "#weekdayTextPathClockwise" },
-    ]);
+    expect(result.labels.map(({ day, isLowerHalf, href }) => ({ day, isLowerHalf, href }))).toEqual(
+        result.weekdayNames.map((day, index) => ({
+            day,
+            isLowerHalf: [2, 3, 4].includes(index),
+            href: [2, 3, 4].includes(index) ? "#weekdayTextPathCounterclockwise" : "#weekdayTextPathClockwise",
+        }))
+    );
     result.labels.forEach(label => {
         expect(label.lengthAdjust).toBe("spacingAndGlyphs");
         expect(label.textLength).toBeCloseTo(result.layout.weekdayTextLength, 4);
@@ -456,6 +455,58 @@ test("alignment mode is independent from presets and keeps weekday pointer at ri
     expect(result.mondayBoundaryAngleDegrees).toBeCloseTo(0, 9);
     expect(result.weekdayDaySpanDegrees).toBeCloseTo(360 / 7, 9);
     expect(result.angleDelta).toBeCloseTo(360 / 7, 9);
+});
+
+test("weekday pointer extends marker zero without hiding its hour highlight", async ({ page }) => {
+    await gotoClock(page);
+
+    await page.locator(".advanced-parameters > summary").click();
+    await page.getByRole("button", { name: "Week rotation" }).click();
+    await setDateTimeInput(page, "2026-06-22T00:00:00");
+    await expect.poll(() => appValue(page, () => window.__noniusClockApp.alignedRotatingHourMarkerIndex)).toBe(0);
+
+    const result = await page.evaluate(() => {
+        const app = window.__noniusClockApp;
+        const weekdayPointer = document.querySelector(".weekdayPointer.isWeekdayPointer");
+        const weekdayPointerPath = document.querySelector("#weekdayPointerPath");
+        const weekdayPointerClipPath = document.querySelector("#weekdayPointerClipPath path");
+        const hourHighlight = document.querySelector(".rotatingHourMarker.isMarkerHighlighted");
+
+        return {
+            alignedRotatingHourMarkerIndex: app.alignedRotatingHourMarkerIndex,
+            pointerCount: document.querySelectorAll(".weekdayPointer.isWeekdayPointer").length,
+            pointerTransform: weekdayPointer?.getAttribute("transform"),
+            pointerHref: weekdayPointer?.getAttribute("href"),
+            hourHighlightTransform: hourHighlight?.getAttribute("transform"),
+            hourHighlightHref: hourHighlight?.getAttribute("href"),
+            weekdayPointerPath: weekdayPointerPath?.getAttribute("d"),
+            expectedWeekdayPointerPath: app.markerPath(
+                app.visuals.rotatingHourMarkerOuterRadius,
+                app.visuals.radiusOfRotatingDial,
+                app.rotatingHourMarkerSpanDegrees,
+                true
+            ),
+            weekdayPointerClipPath: weekdayPointerClipPath?.getAttribute("d"),
+            expectedWeekdayPointerClipPath: app.ringClipPath(
+                app.visuals.rotatingHourMarkerOuterRadius,
+                app.visuals.radiusOfRotatingDial
+            ),
+            rotatingHourMarkerOuterRadius: app.visuals.rotatingHourMarkerOuterRadius,
+            rotatingDialRadius: app.visuals.radiusOfRotatingDial,
+            fixedOuterDialRadius: app.visuals.radiusOfOuterDial,
+        };
+    });
+
+    expect(result.alignedRotatingHourMarkerIndex).toBe(0);
+    expect(result.pointerCount).toBe(1);
+    expect(result.pointerTransform).toBe("rotate(0 200 200)");
+    expect(result.pointerHref).toBe("#weekdayPointer");
+    expect(result.hourHighlightTransform).toBe("rotate(0 200 200)");
+    expect(result.hourHighlightHref).toBe("#rotatingHourMarker");
+    expect(result.weekdayPointerPath).toBe(result.expectedWeekdayPointerPath);
+    expect(result.weekdayPointerClipPath).toBe(result.expectedWeekdayPointerClipPath);
+    expect(result.rotatingHourMarkerOuterRadius).toBeLessThan(result.rotatingDialRadius);
+    expect(result.rotatingDialRadius).toBeLessThan(result.fixedOuterDialRadius);
 });
 
 test("distant dates keep the rotating dial transform bounded", async ({ page }) => {

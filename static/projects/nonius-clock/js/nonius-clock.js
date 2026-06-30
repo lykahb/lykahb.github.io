@@ -22,25 +22,25 @@ const DAYS_FROM_CIVIL_ZERO_TO_MONDAY = 4;
 const PHI = 1.61803398875; // golden ratio
 const MARKER_OVERSHOOT = 4;
 
-// const WEEKDAYS = [
-//     "MONDAY",
-//     "TUESDAY",
-//     "WEDNESDAY",
-//     "THURSDAY",
-//     "FRIDAY",
-//     "SATURDAY",
-//     "SUNDAY"
-// ];
-
 const WEEKDAYS = [
-    "星期一",
-    "星期二",
-    "星期三",
-    "星期四",
-    "星期五",
-    "星期六",
-    "星期日"
+    "MONDAY",
+    "TUESDAY",
+    "WEDNESDAY",
+    "THURSDAY",
+    "FRIDAY",
+    "SATURDAY",
+    "SUNDAY"
 ];
+
+// const WEEKDAYS = [
+//     "星期一",
+//     "星期二",
+//     "星期三",
+//     "星期四",
+//     "星期五",
+//     "星期六",
+//     "星期日"
+// ];
 
 // const WEEKDAYS = [
 //     "ПОНЕДІЛОК",
@@ -259,6 +259,9 @@ function createClockApp() {
             get rotatingMinuteMarkerLength() {
                 return this.radiusOfRotatingDial - this.radiusOfInnerFixedDial;
             },
+            get rotatingHourMarkerOuterRadius() {
+                return this.radiusOfInnerFixedDial + this.rotatingMinuteMarkerLength / PHI;
+            },
             get weekdayTextRadius() {
                 return (this.radiusOfRotatingDial + this.radiusOfOuterDial) / 2;
             },
@@ -342,6 +345,9 @@ function createClockApp() {
         },
         get rotatingHourMarkerPhaseDegrees() {
             return this.isCurrentBestAlignment ? -this.params.rotatingDialDegreesPerHour / 2 : 0;
+        },
+        get rotatingHourMarkerSpanDegrees() {
+            return 60 * Math.abs(this.params.rotatingDialDegreesPerMinute);
         },
         get selectedParamPreset() {
             return Object.keys(PARAM_PRESETS).find(option => this.paramPresetMatches(option)) || null;

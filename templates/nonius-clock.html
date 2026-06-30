@@ -320,8 +320,10 @@
         stroke: none;
     }
 
-    .rotatingHourMarker.isWeekdayPointer {
+    .weekdayPointer,
+    .weekdayPointerRoot {
         fill: var(--clock-weekday-pointer);
+        stroke: none;
     }
 
     .hourNumeral > circle {
@@ -431,7 +433,10 @@
                 <path :d="ringClipPath(visuals.radiusOfInnerFixedDial / PHI, visuals.radiusOfInnerFixedDial)" clip-rule="evenodd"></path>
             </clipPath>
             <clipPath id="rotatingHourMarkerClipPath">
-                <path :d="ringClipPath(visuals.radiusOfInnerFixedDial, visuals.radiusOfInnerFixedDial + (visuals.radiusOfRotatingDial - visuals.radiusOfInnerFixedDial) / PHI)" clip-rule="evenodd"></path>
+                <path :d="ringClipPath(visuals.radiusOfInnerFixedDial, visuals.rotatingHourMarkerOuterRadius)" clip-rule="evenodd"></path>
+            </clipPath>
+            <clipPath id="weekdayPointerClipPath">
+                <path :d="ringClipPath(visuals.rotatingHourMarkerOuterRadius, visuals.radiusOfRotatingDial)" clip-rule="evenodd"></path>
             </clipPath>
             <path id="rotatingMinuteMarker"
                 :d="markerPath(visuals.radiusOfInnerFixedDial, visuals.radiusOfRotatingDial, visuals.minuteMarkerThicknessFactor * Math.abs(params.rotatingDialDegreesPerMinute), false)"></path>
@@ -440,12 +445,12 @@
             <path id="fixedHourMarkerPath"
                 :d="markerPath(visuals.radiusOfInnerFixedDial, visuals.radiusOfInnerFixedDial / PHI, 60 * Math.abs(params.rotatingDialDegreesPerMinute), false)"></path>
             <use id="fixedHourMarker" href="#fixedHourMarkerPath" paint-order="fill"></use>
-            <path id="rotatingHourMarkerPathClosed"
-                :d="markerPath(visuals.radiusOfInnerFixedDial, visuals.radiusOfInnerFixedDial + (visuals.radiusOfRotatingDial - visuals.radiusOfInnerFixedDial) / PHI, 60 * Math.abs(params.rotatingDialDegreesPerMinute), true)"></path>
             <path id="rotatingHourMarkerPath"
-                :d="markerPath(visuals.radiusOfInnerFixedDial, visuals.radiusOfInnerFixedDial + (visuals.radiusOfRotatingDial - visuals.radiusOfInnerFixedDial) / PHI, 60 * Math.abs(params.rotatingDialDegreesPerMinute), false)"></path>
+                :d="markerPath(visuals.radiusOfInnerFixedDial, visuals.rotatingHourMarkerOuterRadius, rotatingHourMarkerSpanDegrees, false)"></path>
+            <path id="weekdayPointerPath"
+                :d="markerPath(visuals.rotatingHourMarkerOuterRadius, visuals.radiusOfRotatingDial, rotatingHourMarkerSpanDegrees, true)"></path>
             <use id="rotatingHourMarker" href="#rotatingHourMarkerPath" paint-order="fill"></use>
-            <use id="rotatingHourMarkerFirst" href="#rotatingHourMarkerPathClosed" paint-order="fill"></use>
+            <use id="weekdayPointer" href="#weekdayPointerPath" paint-order="fill"></use>
         </defs>
         <g id="outerDial">
             <!-- SVG paints in DOM order; draw fills first, clipped markers next, and boundary strokes last. -->
@@ -509,20 +514,24 @@
                     :transform="`rotate(${rotatingMinuteMarkerAngleDegrees(alignedRotatingMinuteMarkerIndex)} ${centerCoordX} ${centerCoordY})`"></use>
             </g>
             <g clip-path="url(#rotatingHourMarkerClipPath)">
-                <use href="#rotatingHourMarkerFirst"
-                    :transform="`rotate(${rotatingHourMarkerAngleDegrees(0)} ${centerCoordX} ${centerCoordY})`"
-                    :class="{'rotatingHourMarker': true, 'isFirstMarker': true, 'isWeekdayPointer': visuals.showWeekdayRing && !isCurrentBestAlignment}">
-                </use>
-                <use v-for="i in Array.from({length: Math.max(0, params.numberOfMarksForHoursOnRotatingDial - 1)}, (x, i) => i + 1)"
+                <use v-for="i in Array.from({length: params.numberOfMarksForHoursOnRotatingDial}, (x, i) => i)"
                     href="#rotatingHourMarker"
                     :transform="`rotate(${rotatingHourMarkerAngleDegrees(i)} ${centerCoordX} ${centerCoordY})`"
                     class="rotatingHourMarker">
                 </use>
                 <use v-if="visuals.showWeekdayRing && isCurrentBestAlignment"
-                    href="#rotatingHourMarkerFirst"
+                    href="#rotatingHourMarker"
                     :transform="`rotate(0 ${centerCoordX} ${centerCoordY})`"
-                    class="rotatingHourMarker isWeekdayPointer">
+                    class="weekdayPointerRoot">
                 </use>
+            </g>
+            <g v-if="visuals.showWeekdayRing" clip-path="url(#weekdayPointerClipPath)">
+                <use href="#weekdayPointer"
+                    :transform="`rotate(0 ${centerCoordX} ${centerCoordY})`"
+                    class="weekdayPointer isWeekdayPointer">
+                </use>
+            </g>
+            <g clip-path="url(#rotatingHourMarkerClipPath)">
                 <use v-if="visuals.highlightAlignedMarkers"
                     href="#rotatingHourMarker"
                     class="rotatingHourMarker isMarkerHighlighted"
