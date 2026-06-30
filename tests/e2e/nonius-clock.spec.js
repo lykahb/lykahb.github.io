@@ -796,7 +796,7 @@ test("invalid numeric controls keep the previous clock state", async ({ page }) 
         },
         {
             selector: "#minuteMarkerThicknessFactor",
-            invalidValue: "10.2",
+            invalidValue: "51",
             validValue: "2.5",
             readState: () => window.__noniusClockApp.visuals.minuteMarkerThicknessFactor,
         },
