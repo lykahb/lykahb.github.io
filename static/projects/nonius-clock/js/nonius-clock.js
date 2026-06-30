@@ -22,15 +22,35 @@ const DAYS_FROM_CIVIL_ZERO_TO_MONDAY = 4;
 const PHI = 1.61803398875; // golden ratio
 const MARKER_OVERSHOOT = 4;
 
+// const WEEKDAYS = [
+//     "MONDAY",
+//     "TUESDAY",
+//     "WEDNESDAY",
+//     "THURSDAY",
+//     "FRIDAY",
+//     "SATURDAY",
+//     "SUNDAY"
+// ];
+
 const WEEKDAYS = [
-    "MONDAY",
-    "TUESDAY",
-    "WEDNESDAY",
-    "THURSDAY",
-    "FRIDAY",
-    "SATURDAY",
-    "SUNDAY"
+    "星期一",
+    "星期二",
+    "星期三",
+    "星期四",
+    "星期五",
+    "星期六",
+    "星期日"
 ];
+
+// const WEEKDAYS = [
+//     "ПОНЕДІЛОК",
+//     "ВІВТОРОК",
+//     "СЕРЕДА",
+//     "ЧЕТВЕР",
+//     "П'ЯТНИЦЯ",
+//     "СУБОТА",
+//     "НЕДІЛЯ"
+// ];
 
 const PARAM_PRESETS = {
     chaoticHours: {
@@ -69,7 +89,7 @@ const PARAM_PRESETS = {
         areFixedHoursShorter: false,
         areFixedMinutesShorter: false,
         spacingMultipleForFixedMinuteMarks: 2,
-        minuteNumeralEvery: 5,
+        minuteNumeralEvery: 15,
         minuteNumeral59: true,
         showWeekdayRing: true
     }
@@ -508,7 +528,8 @@ function createClockApp() {
             return `${pathAngleDegrees / 360 * 100}%`;
         },
         weekdayTextLength() {
-            return this.visuals.weekdayTextRadius * this.weekdayDaySpanDegrees * Math.PI / 180;
+            const factor = 0.9;  // Shorter names create spacing.
+            return factor * this.visuals.weekdayTextRadius * this.weekdayDaySpanDegrees * Math.PI / 180;
         },
         isLowerHalfAngle(angleDegrees) {
             const normalizedAngleDegrees = normalizedDegrees(angleDegrees);
