@@ -253,6 +253,7 @@ function createClockApp() {
             showWeekdayRing: false,
             allWeekdaysUpright: true,
             weekdayText: "shortEnglish",
+            theme: "solarized-light",
 
             get radiusOfInnerFixedDial() {
                 return this.radiusOfOuterDial * (1 - 1 / PHI);

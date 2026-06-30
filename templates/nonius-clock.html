@@ -139,6 +139,47 @@
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
+    .theme-grid {
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
+    }
+
+    .theme-choice {
+        align-items: center;
+        min-height: 3.2rem;
+    }
+
+    .theme-swatch {
+        display: grid;
+        flex: 0 0 auto;
+        width: 2.4rem;
+        height: 2.4rem;
+        overflow: hidden;
+        border: 1px solid #dce4dd;
+        border-radius: 50%;
+        background: var(--swatch-paper);
+    }
+
+    .theme-swatch::before,
+    .theme-swatch::after {
+        content: "";
+        grid-area: 1 / 1;
+    }
+
+    .theme-swatch::before {
+        width: 50%;
+        height: 50%;
+        align-self: end;
+        justify-self: end;
+        background: var(--swatch-marker);
+    }
+
+    .theme-swatch::after {
+        width: 50%;
+        height: 50%;
+        justify-self: end;
+        background: var(--swatch-accent);
+    }
+
     .button-grid {
         grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr));
     }
@@ -286,6 +327,66 @@
         --clock-weekday-pointer: #c14f32;
     }
 
+    #clock[data-theme='catppuccin-latte'] {
+        --clock-paper: #eff1f5;
+        --clock-ink: #4c4f69;
+        --clock-marker: #9ca0b0;
+        --clock-marker-strong: #6c6f85;
+        --clock-highlight: #1e66f5;
+        --clock-weekday: #8839ef;
+        --clock-weekday-pointer: #d20f39;
+    }
+
+    #clock[data-theme='gruvbox-light'] {
+        --clock-paper: #fbf1c7;
+        --clock-ink: #3c3836;
+        --clock-marker: #bdae93;
+        --clock-marker-strong: #7c6f64;
+        --clock-highlight: #458588;
+        --clock-weekday: #8f3f71;
+        --clock-weekday-pointer: #cc241d;
+    }
+
+    #clock[data-theme='nord-night'] {
+        --clock-paper: #2e3440;
+        --clock-ink: #eceff4;
+        --clock-marker: #4c566a;
+        --clock-marker-strong: #81a1c1;
+        --clock-highlight: #a3be8c;
+        --clock-weekday: #d8dee9;
+        --clock-weekday-pointer: #bf616a;
+    }
+
+    #clock[data-theme='dracula'] {
+        --clock-paper: #282a36;
+        --clock-ink: #f8f8f2;
+        --clock-marker: #6272a4;
+        --clock-marker-strong: #8be9fd;
+        --clock-highlight: #f1fa8c;
+        --clock-weekday: #bd93f9;
+        --clock-weekday-pointer: #ff5555;
+    }
+
+    #clock[data-theme='everforest-dark'] {
+        --clock-paper: #2d353b;
+        --clock-ink: #d3c6aa;
+        --clock-marker: #7a8478;
+        --clock-marker-strong: #859289;
+        --clock-highlight: #a7c080;
+        --clock-weekday: #7fbbb3;
+        --clock-weekday-pointer: #e67e80;
+    }
+
+    #clock[data-theme='everforest-light'] {
+        --clock-paper: #fdf6e3;
+        --clock-ink: #5c6a72;
+        --clock-marker: #a6b0a0;
+        --clock-marker-strong: #829181;
+        --clock-highlight: #8da101;
+        --clock-weekday: #3a94c5;
+        --clock-weekday-pointer: #f85552;
+    }
+
     #clock text {
         font-family: "Gill Sans MT", Helvetica, Arial, Calibri, "Trebuchet MS", ui-rounded, sans-serif;
         fill: var(--clock-ink);
@@ -416,7 +517,7 @@
 
 {% raw %}
 <div id="clockAndControls">
-    <svg id="clock" viewBox="0 0 400 400" @vue:mounted="setupUpdate">
+    <svg id="clock" viewBox="0 0 400 400" :data-theme="visuals.theme" @vue:mounted="setupUpdate">
         <defs>
             <clipPath id="fixedMinuteMarkerClipPath">
                 <path :d="ringClipPath(visuals.radiusOfRotatingDial, visuals.radiusOfOuterDial)" clip-rule="evenodd"></path>
@@ -579,6 +680,47 @@
                     <button @click="setParams('chaoticMinutes')" :class="{isSelectedOption: isSelectedParamPreset('chaoticMinutes')}" :aria-pressed="isSelectedParamPreset('chaoticMinutes')" aria-label="Ordered hours preset" title="Ordered hours preset">Ordered hours</button>
                     <button @click="setParams('chaoticHoursMinuteGap')" :class="{isSelectedOption: isSelectedParamPreset('chaoticHoursMinuteGap')}" :aria-pressed="isSelectedParamPreset('chaoticHoursMinuteGap')" aria-label="Compact minutes preset" title="Compact minutes preset">Compact minutes</button>
                     <button @click="setParams('oneWeekRotation')" :class="{isSelectedOption: isSelectedParamPreset('oneWeekRotation')}" :aria-pressed="isSelectedParamPreset('oneWeekRotation')" aria-label="Week rotation preset" title="Week rotation preset">Week rotation</button>
+                </div>
+            </section>
+
+            <section class="control-section">
+                <h4>Theme</h4>
+                <div class="choice-grid theme-grid">
+                    <label class="choice theme-choice">
+                        <input type="radio" v-model="visuals.theme" value="solarized-light" />
+                        <span class="theme-swatch" style="--swatch-paper: #fdf6e3; --swatch-marker: #93a1a1; --swatch-accent: #c14f32;"></span>
+                        Solarized
+                    </label>
+                    <label class="choice theme-choice">
+                        <input type="radio" v-model="visuals.theme" value="catppuccin-latte" />
+                        <span class="theme-swatch" style="--swatch-paper: #eff1f5; --swatch-marker: #9ca0b0; --swatch-accent: #d20f39;"></span>
+                        Catppuccin
+                    </label>
+                    <label class="choice theme-choice">
+                        <input type="radio" v-model="visuals.theme" value="gruvbox-light" />
+                        <span class="theme-swatch" style="--swatch-paper: #fbf1c7; --swatch-marker: #bdae93; --swatch-accent: #cc241d;"></span>
+                        Gruvbox
+                    </label>
+                    <label class="choice theme-choice">
+                        <input type="radio" v-model="visuals.theme" value="nord-night" />
+                        <span class="theme-swatch" style="--swatch-paper: #2e3440; --swatch-marker: #4c566a; --swatch-accent: #bf616a;"></span>
+                        Nord
+                    </label>
+                    <label class="choice theme-choice">
+                        <input type="radio" v-model="visuals.theme" value="dracula" />
+                        <span class="theme-swatch" style="--swatch-paper: #282a36; --swatch-marker: #6272a4; --swatch-accent: #ff5555;"></span>
+                        Dracula
+                    </label>
+                    <label class="choice theme-choice">
+                        <input type="radio" v-model="visuals.theme" value="everforest-dark" />
+                        <span class="theme-swatch" style="--swatch-paper: #2d353b; --swatch-marker: #7a8478; --swatch-accent: #e67e80;"></span>
+                        Everforest Dark
+                    </label>
+                    <label class="choice theme-choice">
+                        <input type="radio" v-model="visuals.theme" value="everforest-light" />
+                        <span class="theme-swatch" style="--swatch-paper: #fdf6e3; --swatch-marker: #a6b0a0; --swatch-accent: #f85552;"></span>
+                        Everforest Light
+                    </label>
                 </div>
             </section>
 

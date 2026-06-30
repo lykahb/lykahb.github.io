@@ -636,6 +636,93 @@ test("alignment highlights can be disabled", async ({ page }) => {
     await expect(page.locator(".isMarkerHighlighted")).toHaveCount(0);
 });
 
+test("clock theme selector changes SVG palette variables", async ({ page }) => {
+    await gotoClock(page);
+    await expect(page.getByRole("heading", { name: "Theme" })).toBeVisible();
+
+    const themeCases = [
+        {
+            label: "Solarized",
+            value: "solarized-light",
+            paper: "rgb(253, 246, 227)",
+            ink: "rgb(7, 54, 66)",
+            marker: "rgb(147, 161, 161)",
+            highlight: "rgb(44, 54, 58)",
+        },
+        {
+            label: "Catppuccin",
+            value: "catppuccin-latte",
+            paper: "rgb(239, 241, 245)",
+            ink: "rgb(76, 79, 105)",
+            marker: "rgb(156, 160, 176)",
+            highlight: "rgb(30, 102, 245)",
+        },
+        {
+            label: "Gruvbox",
+            value: "gruvbox-light",
+            paper: "rgb(251, 241, 199)",
+            ink: "rgb(60, 56, 54)",
+            marker: "rgb(189, 174, 147)",
+            highlight: "rgb(69, 133, 136)",
+        },
+        {
+            label: "Nord",
+            value: "nord-night",
+            paper: "rgb(46, 52, 64)",
+            ink: "rgb(236, 239, 244)",
+            marker: "rgb(76, 86, 106)",
+            highlight: "rgb(163, 190, 140)",
+        },
+        {
+            label: "Dracula",
+            value: "dracula",
+            paper: "rgb(40, 42, 54)",
+            ink: "rgb(248, 248, 242)",
+            marker: "rgb(98, 114, 164)",
+            highlight: "rgb(241, 250, 140)",
+        },
+        {
+            label: "Everforest Dark",
+            value: "everforest-dark",
+            paper: "rgb(45, 53, 59)",
+            ink: "rgb(211, 198, 170)",
+            marker: "rgb(122, 132, 120)",
+            highlight: "rgb(167, 192, 128)",
+        },
+        {
+            label: "Everforest Light",
+            value: "everforest-light",
+            paper: "rgb(253, 246, 227)",
+            ink: "rgb(92, 106, 114)",
+            marker: "rgb(166, 176, 160)",
+            highlight: "rgb(141, 161, 1)",
+        },
+    ];
+
+    for (const theme of themeCases) {
+        await page.getByLabel(theme.label, { exact: true }).check();
+        await expect.poll(() => appValue(page, () => window.__noniusClockApp.visuals.theme)).toBe(theme.value);
+        await expect(page.locator("#clock")).toHaveAttribute("data-theme", theme.value);
+
+        const colors = await page.evaluate(() => {
+            const styleFor = selector => getComputedStyle(document.querySelector(selector));
+            return {
+                paper: styleFor(".outerDialCircleFill").fill,
+                ink: styleFor(".outerDialCircleStroke").stroke,
+                marker: styleFor(".fixedMinuteMarker:not(.isMarkerHighlighted)").fill,
+                highlight: styleFor(".fixedMinuteMarker.isMarkerHighlighted").fill,
+            };
+        });
+
+        expect(colors).toEqual({
+            paper: theme.paper,
+            ink: theme.ink,
+            marker: theme.marker,
+            highlight: theme.highlight,
+        });
+    }
+});
+
 test("zero minute numeral is hidden by default and can be shown", async ({ page }) => {
     await gotoClock(page);
 
