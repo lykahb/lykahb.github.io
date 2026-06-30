@@ -382,20 +382,40 @@
     .isMarkerHighlighted {
         fill: var(--clock-highlight);
     }
+
+    .site-main > section,
+    .site-main > article {
+        max-width: var(--measure);
+    }
+
+    .site-main > hr {
+        margin-block: 4.8rem;
+    }
+
+    .site-main > article > section + section {
+        margin-top: 4rem;
+    }
+
+    .site-main > article h2 {
+        font-size: clamp(2.4rem, 3vw, 3.4rem);
+    }
 </style>
 
 <h1>Nonius Clock</h1>
 
-<p>
-    A modern watch is less of a practical device and more a style choice. I'd like to present a novel quirky way to display time.
-    This clock face only needs one moving part to tell time - the rotating ring. Yet, unlike a clock with only an hour hand, it has a precision of under one minute. The idea is to add an auxiliary set of minute and hour marks - similar to the design of a vernier scale or nonius on the measuring instruments.
-</p>
+<section>
+    <p>
+        This clock tells time with one moving part: a rotating ring. Instead of hands, it uses aligned marks on fixed and moving scales.
+    </p>
+
+    <p>
+        To read it, find the aligned minute marks on the outer ring, then the aligned hour marks near the center. The highlighted marks show the current reading while you learn the pattern.
+    </p>
+</section>
 
 <p>
-    How do you read time? The dial has marks for minutes both on the rotating ring and on the fixed ring around it. A pair of marks aligns at the current minute. The marks for the hours are also indicated with alignment - although the fixed marks for hours are on the circle inside of the rotating ring. The marks are wide enough that the marks get disconnected after the minute or hour are over.
+    Try Current, Midnight, or Random to see different alignments. The presets change the mark layout, and the highlight can be turned off in Advanced parameters.
 </p>
-
-<p>This post continues below, but first let's see the clock in action. It looks much better on the Retina and other displays with high pixel density. Note that the markers that have alignment and display the current time are highlighted red to make it easier to learn how to read the clock. It is not necessary for the operation and can be turned off in the controls under the clock.</p>
 
 {% raw %}
 <div id="clockAndControls">
@@ -664,27 +684,53 @@
 
 <hr>
 
-<p>
-    Imagine a clock that only has a single hour hand. That is how the tower clocks showed time in the old days.
-    And this is how <a target="_blank" href="https://meistersinger.com">Meister Singer</a> watches still tell time. It is a clean dial but less precise than a regular watch that has a minute hand.
-</p>
+<article>
+    <section>
+        <h2>Single moving indicator</h2>
+        <p>
+            Imagine a clock that only has a single hour hand. That is how tower clocks showed time in the old days, and this is how <a target="_blank" href="https://meistersinger.com">MeisterSinger</a> watches still tell time. It is a clean dial, but less precise than a regular watch with a minute hand.
+        </p>
 
-<p>
-    If we could tell the slightest change of the position of the hour hand, we could tell time more accurately.
-    There is a tool for that - a <a target="_blank" href="https://en.wikipedia.org/wiki/Calipers">caliper with a sliding vernier scale</a>. 
-    It relies on the <a target="_blank" href="https://en.wikipedia.org/wiki/Vernier_acuity">vernier acuity</a> property of human eye - that is, the human eye can tell whether two lines are misaligned by a tiny distance, even when the distance is too small to notice otherwise. 
-</p>
+        <p>
+            If we could tell the slightest change in the position of the hour hand, we could tell time more accurately too.
+            The <a target="_blank" href="https://en.wikipedia.org/wiki/Vernier_acuity">vernier acuity</a> makes this possible. The human eye can tell whether two lines are misaligned by a tiny distance, even when the distance itself would be hard to notice.
+            On a <a target="_blank" href="https://en.wikipedia.org/wiki/Calipers">vernier caliper</a> the auxiliary vernier scale, a modern form of the nonius idea, makes small shifts readable as alignments between marks.
+            This clock uses the same principle.
+        </p>
+    </section>
 
-<p>
-    The rotation of the ring is much slower than the change of minutes and even hours - in other words, the alignment changes much faster than the ring rotates.
+    <section>
+        <h2>How the alignment moves</h2>
 
-<p>
-    The speed of the rotation and the position of marks are determined by the mathematical properties of the clock. At the core of them are the observations that the next mark for minute must align at 12 o'clock at the beginning of the hour, and that the minute mark alignments must change sixty times faster than the alignments for the hour marks. That is enough to calculate the layout of the marks for the given number of hour marks. The math gives us several solutions for layouts, so we can choose a more aesthetically pleasing one.
-</p>
+        <p>
+            The reading comes from the closest alignment. A slight turn of the ring can shift that closest match to another mark, so the indicated minute or hour advances by more than the ring itself appears to move.
+        </p>
+    </section>
 
-<p>
-    Reading the alignment is easier in the real world than on a screen. I would like to make a wall clock with this design. Printing on a transparent plastic and slowing down the rotation can be tricky, though. One possible simplification is to replace the rotating ring with a rotating circle and move the hours on the outside. To keep the face from getting too busy, we could display the hour markers as colored segments - with the thin lines for the minute markers over them. In most of the layouts there is a gap between the minute marks, which can house the date window.
-</p>
+    <section>
+        <h2>The layout math</h2>
+
+        <p>
+            The speed of the rotation and the positions of the marks are determined by the clock's geometry. The next minute mark must align at 12 o'clock at the beginning of each hour, and the minute alignments must change sixty times faster than the hour alignments.
+        </p>
+
+        <p>
+            Those constraints are enough to calculate the mark layout for a chosen number of hour marks. The math gives several possible layouts, so the final design can choose the one that looks best.
+        </p>
+    </section>
+
+    <section>
+        <h2>Making a physical clock</h2>
+
+        <p>
+            Reading the alignment is easier in the real world than on a screen, especially because the marks can be printed cleanly at clock size. I would like to make a wall clock with this design, but printing on transparent plastic and slowing down the rotation may be tricky.
+        </p>
+
+        <p>
+            One possible simplification is to replace the rotating ring with a rotating circle and move the hours to the outside. To keep the face from getting too busy, the hour markers could become colored segments with thin minute lines over them. In most layouts there is also a gap between the minute marks, which could hold a date window.
+        </p>
+    </section>
+</article>
 
 <script>
     const app = createClockApp();
