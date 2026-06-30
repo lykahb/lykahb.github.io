@@ -22,45 +22,35 @@ const DAYS_FROM_CIVIL_ZERO_TO_MONDAY = 4;
 const PHI = 1.61803398875; // golden ratio
 const MARKER_OVERSHOOT = 4;
 
-// const WEEKDAYS = [
-//     "MONDAY",
-//     "TUESDAY",
-//     "WEDNESDAY",
-//     "THURSDAY",
-//     "FRIDAY",
-//     "SATURDAY",
-//     "SUNDAY"
-// ];
-
-const WEEKDAYS = [
-    "MON",
-    "TUE",
-    "WED",
-    "THU",
-    "FRI",
-    "SAT",
-    "SUN"
-];
-
-// const WEEKDAYS = [
-//     "星期一",
-//     "星期二",
-//     "星期三",
-//     "星期四",
-//     "星期五",
-//     "星期六",
-//     "星期日"
-// ];
-
-// const WEEKDAYS = [
-//     "ПОНЕДІЛОК",
-//     "ВІВТОРОК",
-//     "СЕРЕДА",
-//     "ЧЕТВЕР",
-//     "П'ЯТНИЦЯ",
-//     "СУБОТА",
-//     "НЕДІЛЯ"
-// ];
+const WEEKDAY_TEXT_OPTIONS = {
+    fullEnglish: [
+        "MONDAY",
+        "TUESDAY",
+        "WEDNESDAY",
+        "THURSDAY",
+        "FRIDAY",
+        "SATURDAY",
+        "SUNDAY"
+    ],
+    shortEnglish: [
+        "MON",
+        "TUE",
+        "WED",
+        "THU",
+        "FRI",
+        "SAT",
+        "SUN"
+    ],
+    chinese: [
+        "星期一",
+        "星期二",
+        "星期三",
+        "星期四",
+        "星期五",
+        "星期六",
+        "星期日"
+    ]
+};
 
 const PARAM_PRESETS = {
     chaoticHours: {
@@ -262,6 +252,7 @@ function createClockApp() {
             highlightAlignedMarkers: true,
             showWeekdayRing: false,
             allWeekdaysUpright: true,
+            weekdayText: "shortEnglish",
 
             get radiusOfInnerFixedDial() {
                 return this.radiusOfOuterDial * (1 - 1 / PHI);
@@ -288,6 +279,9 @@ function createClockApp() {
                     .filter(minute => showZero || minute !== 0)
                     .filter(minute => minute % this.minuteNumeralEvery === 0
                         || (this.minuteNumeral59 && minute === 59))
+            },
+            get weekdayLabels() {
+                return WEEKDAY_TEXT_OPTIONS[this.weekdayText] || WEEKDAY_TEXT_OPTIONS.shortEnglish;
             }
         },
 

@@ -472,7 +472,7 @@
                 <path id="weekdayTextPathCounterclockwise"
                     class="weekdayTextGuide"
                     :d="circlePath(visuals.weekdayTextRadius, 0)"></path>
-                <text v-for="(day, i) in WEEKDAYS" class="weekdayName" text-anchor="middle">
+                <text v-for="(day, i) in visuals.weekdayLabels" class="weekdayName" text-anchor="middle">
                     <textPath :href="weekdayTextPathHref(i)"
                         :start-offset.camel="weekdayTextStartOffset(i)"
                         :text-length.camel="weekdayTextLength()"
@@ -604,6 +604,14 @@
                     <div class="control-row">
                         <label for="allWeekdaysUpright">All weekdays upright:</label>
                         <input id="allWeekdaysUpright" class="checkbox-control" type="checkbox" v-model="visuals.allWeekdaysUpright"/>
+                    </div>
+                    <div class="control-row choice-row">
+                        <span class="labelForInputGroup">Weekday text:</span>
+                        <div class="choice-grid">
+                            <label class="choice"><input type="radio" v-model="visuals.weekdayText" value="fullEnglish" />SUNDAY</label>
+                            <label class="choice"><input type="radio" v-model="visuals.weekdayText" value="shortEnglish" />SUN</label>
+                            <label class="choice"><input type="radio" v-model="visuals.weekdayText" value="chinese" />星期日</label>
+                        </div>
                     </div>
                     <div class="control-row choice-row">
                         <span class="labelForInputGroup">Direction:</span>

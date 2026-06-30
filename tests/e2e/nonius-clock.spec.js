@@ -358,7 +358,7 @@ test("week rotation keeps lower weekday labels upright", async ({ page }) => {
                     paintOrder: style.paintOrder,
                 };
             }),
-            weekdayNames: WEEKDAYS,
+            weekdayNames: window.__noniusClockApp.visuals.weekdayLabels,
             textGuides: Array.from(document.querySelectorAll(".weekdayTextGuide"), path => ({
                 id: path.id,
                 sweepFlags: Array.from(path.getAttribute("d").matchAll(arcSweepFlagPattern), match => match[1]),
@@ -428,6 +428,35 @@ test("week rotation keeps lower weekday labels upright", async ({ page }) => {
     ].forEach((expectedStartOffsetPercent, index) => {
         expect(result.labels[index].startOffsetPercent).toBeCloseTo(expectedStartOffsetPercent, 4);
     });
+});
+
+test("weekday text can switch between full, short, and Chinese labels", async ({ page }) => {
+    await gotoClock(page);
+
+    await page.locator(".advanced-parameters > summary").click();
+    await page.getByRole("button", { name: "Week rotation" }).click();
+
+    const weekdayLabels = () => Array.from(
+        document.querySelectorAll(".weekdayName"),
+        text => text.textContent.trim()
+    );
+
+    await expect(page.getByLabel("SUN", { exact: true })).toBeChecked();
+    await expect.poll(() => appValue(page, weekdayLabels)).toEqual([
+        "MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"
+    ]);
+
+    await page.getByLabel("SUNDAY", { exact: true }).check();
+    await expect.poll(() => appValue(page, () => window.__noniusClockApp.visuals.weekdayText)).toBe("fullEnglish");
+    await expect.poll(() => appValue(page, weekdayLabels)).toEqual([
+        "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY"
+    ]);
+
+    await page.getByLabel("星期日", { exact: true }).check();
+    await expect.poll(() => appValue(page, () => window.__noniusClockApp.visuals.weekdayText)).toBe("chinese");
+    await expect.poll(() => appValue(page, weekdayLabels)).toEqual([
+        "星期一", "星期二", "星期三", "星期四", "星期五", "星期六", "星期日"
+    ]);
 });
 
 test("all weekdays upright can be disabled", async ({ page }) => {
