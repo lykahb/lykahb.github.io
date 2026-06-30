@@ -667,9 +667,12 @@
                             :value="visuals.minuteNumeralEvery"
                             @input="setNumberInputValue($event, visuals, 'minuteNumeralEvery')"/>
                     </div>
-                    <div class="control-row">
-                        <label for="minuteNumeral59">Show 59:</label>
-                        <input id="minuteNumeral59" class="checkbox-control" type="checkbox" v-model="visuals.minuteNumeral59"/>
+                    <div class="control-row choice-row">
+                        <span class="labelForInputGroup">Show numerals:</span>
+                        <div class="choice-grid">
+                            <label class="choice"><input id="minuteNumeral0" type="checkbox" v-model="visuals.minuteNumeral0" />0 minute</label>
+                            <label class="choice"><input id="minuteNumeral59" type="checkbox" v-model="visuals.minuteNumeral59" />59 minute</label>
+                        </div>
                     </div>
                     <div class="control-row">
                         <label for="minuteMarkerThicknessFactor">Marker thickness:</label>

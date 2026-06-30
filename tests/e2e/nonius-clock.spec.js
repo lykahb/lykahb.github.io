@@ -567,6 +567,41 @@ test("alignment highlights can be disabled", async ({ page }) => {
     await expect(page.locator(".isMarkerHighlighted")).toHaveCount(0);
 });
 
+test("zero minute numeral is hidden by default and can be shown", async ({ page }) => {
+    await gotoClock(page);
+
+    await page.locator(".advanced-parameters > summary").click();
+    await expect(page.locator("#minuteNumeral0")).not.toBeChecked();
+    await expect(page.locator("#minuteNumeral59")).not.toBeChecked();
+
+    const minuteLabels = () => Array.from(
+        document.querySelectorAll(".minuteNumeral text"),
+        text => text.textContent.trim()
+    );
+
+    await expect.poll(() => appValue(page, minuteLabels)).not.toContain("0");
+    await expect.poll(() => appValue(page, minuteLabels)).not.toContain("59");
+
+    await page.locator("#minuteNumeral0").check();
+    await expect.poll(() => appValue(page, () => window.__noniusClockApp.visuals.minuteNumeral0)).toBe(true);
+    await expect.poll(() => appValue(page, minuteLabels)).toContain("0");
+
+    await page.locator("#minuteNumeral59").check();
+    await expect.poll(() => appValue(page, () => window.__noniusClockApp.visuals.minuteNumeral59)).toBe(true);
+    await expect.poll(() => appValue(page, minuteLabels)).toContain("59");
+
+    await page.locator("#minuteNumeral59").uncheck();
+    await expect.poll(() => appValue(page, () => window.__noniusClockApp.visuals.minuteNumeral59)).toBe(false);
+    await expect.poll(() => appValue(page, minuteLabels)).not.toContain("59");
+
+    await page.locator("#minuteNumeral0").uncheck();
+    await page.locator("#minuteNumeralEvery").fill("1");
+    await expect.poll(() => appValue(page, () => window.__noniusClockApp.visuals.minuteNumeral0)).toBe(false);
+    await expect.poll(() => appValue(page, () => window.__noniusClockApp.visuals.minuteNumeralEvery)).toBe(1);
+    await expect.poll(() => appValue(page, minuteLabels)).toContain("0");
+    await expect.poll(() => appValue(page, minuteLabels)).toContain("59");
+});
+
 test("invalid numeric controls keep the previous clock state", async ({ page }) => {
     const consoleErrors = [];
     page.on("console", message => {
