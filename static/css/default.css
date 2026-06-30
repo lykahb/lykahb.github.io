@@ -151,7 +151,6 @@ ul {
 }
 
 .site-header {
-  position: sticky;
   top: 0;
   z-index: 5;
   border-bottom: 1px solid rgba(23, 32, 28, 0.11);
@@ -177,14 +176,6 @@ ul {
 .brand-name {
   font-size: 1.7rem;
   font-weight: 780;
-}
-
-.brand-role {
-  color: var(--muted);
-  font-size: 1.2rem;
-  font-weight: 650;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
 }
 
 .site-nav {
