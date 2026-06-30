@@ -342,6 +342,12 @@ test("week rotation keeps lower weekday labels upright", async ({ page }) => {
                 hourNumeralCircleCount: document.querySelectorAll(".hourNumeral circle").length,
                 minuteNumeralCircleCount: document.querySelectorAll(".minuteNumeral circle").length,
                 numeralCounterPatchCount: document.querySelectorAll(".numeralCounterPatch").length,
+                numeralTransformCount: document.querySelectorAll([
+                    ".hourNumeral[transform]",
+                    ".minuteNumeral[transform]",
+                    ".hourNumeral text[transform]",
+                    ".minuteNumeral text[transform]",
+                ].join(", ")).length,
             },
             numeralInteriorFillFilter: {
                 filterRegion: {
@@ -417,6 +423,7 @@ test("week rotation keeps lower weekday labels upright", async ({ page }) => {
     expect(result.layout.hourNumeralCircleCount).toBe(0);
     expect(result.layout.minuteNumeralCircleCount).toBe(0);
     expect(result.layout.numeralCounterPatchCount).toBe(0);
+    expect(result.layout.numeralTransformCount).toBe(0);
     expect(result.numeralInteriorFillFilter.filterRegion).toEqual({
         x: "-40%",
         y: "-80%",

@@ -264,6 +264,9 @@ function createClockApp() {
             get fixedMinuteMarkerLength() {
                 return this.radiusOfOuterDial - this.radiusOfRotatingDial;
             },
+            get fixedHourMarkerLength() {
+                return this.radiusOfInnerFixedDial * (1 - 1 / PHI);
+            },
             get rotatingMinuteMarkerLength() {
                 return this.radiusOfRotatingDial - this.radiusOfInnerFixedDial;
             },
@@ -272,6 +275,12 @@ function createClockApp() {
             },
             get weekdayTextRadius() {
                 return (this.radiusOfRotatingDial + this.radiusOfOuterDial) / 2;
+            },
+            get minuteNumeralRadius() {
+                return (this.radiusOfRotatingDial + this.radiusOfOuterDial) / 2;
+            },
+            get hourNumeralRadius() {
+                return this.radiusOfInnerFixedDial - this.fixedHourMarkerLength / 2;
             },
             get minutesWithNumerals() {
                 const showZero = this.minuteNumeral0 || this.minuteNumeralEvery === 1;
@@ -534,6 +543,18 @@ function createClockApp() {
                 y: this.centerCoordY - radius * Math.cos(pointAngleRadians)
             };
         },
+        minuteNumeralPoint(minute) {
+            return this.pointOnCircle(
+                this.visuals.minuteNumeralRadius,
+                minute * this.params.fixedMinuteMarkerStepDegrees
+            );
+        },
+        hourNumeralPoint(hourIndex) {
+            return this.pointOnCircle(
+                this.visuals.hourNumeralRadius,
+                this.fixedHourMarkerAngleDegrees(hourIndex)
+            );
+        },
         weekdayTextCenterAngleDegrees(dayIndex) {
             return this.weekdayBoundaryAngleDegrees(dayIndex)
                 + this.weekdayScaleDirection * this.weekdayDaySpanDegrees / 2;
@@ -566,10 +587,10 @@ function createClockApp() {
             return this.weekdayScaleDirection * dayIndex * this.weekdayDaySpanDegrees;
         },
         fixedHourMarkerAngleDegrees(hourIndex) {
-            if (hourIndex === 0) {
-                return 0;
-            }
-            return (hourIndex - this.params.numberOfHours) * this.params.fixedHourMarkerStepDegrees;
+            // Count backward from 12 so the large gap lands between 12 and 1,
+            // instead of between 11 and 12.
+            const stepsBeforeTwelve = (this.params.numberOfHours - hourIndex) % this.params.numberOfHours;
+            return -stepsBeforeTwelve * this.params.fixedHourMarkerStepDegrees;
         },
         rotatingMinuteMarkerAngleDegrees(markerIndex) {
             return markerIndex * this.params.rotatingMinuteMarkerSpacingDegrees + this.rotatingMinuteMarkerPhaseDegrees;
