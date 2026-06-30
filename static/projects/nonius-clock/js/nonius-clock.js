@@ -22,14 +22,24 @@ const DAYS_FROM_CIVIL_ZERO_TO_MONDAY = 4;
 const PHI = 1.61803398875; // golden ratio
 const MARKER_OVERSHOOT = 4;
 
+// const WEEKDAYS = [
+//     "MONDAY",
+//     "TUESDAY",
+//     "WEDNESDAY",
+//     "THURSDAY",
+//     "FRIDAY",
+//     "SATURDAY",
+//     "SUNDAY"
+// ];
+
 const WEEKDAYS = [
-    "MONDAY",
-    "TUESDAY",
-    "WEDNESDAY",
-    "THURSDAY",
-    "FRIDAY",
-    "SATURDAY",
-    "SUNDAY"
+    "MON",
+    "TUE",
+    "WED",
+    "THU",
+    "FRI",
+    "SAT",
+    "SUN"
 ];
 
 // const WEEKDAYS = [
@@ -251,6 +261,7 @@ function createClockApp() {
             minuteMarkerThicknessFactor: 10,
             highlightAlignedMarkers: true,
             showWeekdayRing: false,
+            allWeekdaysUpright: true,
 
             get radiusOfInnerFixedDial() {
                 return this.radiusOfOuterDial * (1 - 1 / PHI);
@@ -533,16 +544,20 @@ function createClockApp() {
                 + this.weekdayScaleDirection * this.weekdayDaySpanDegrees / 2;
         },
         weekdayTextPathHref(dayIndex) {
-            return this.isLowerHalfAngle(this.weekdayTextCenterAngleDegrees(dayIndex))
+            return this.weekdayTextUsesCounterclockwisePath(dayIndex)
                 ? "#weekdayTextPathCounterclockwise"
                 : "#weekdayTextPathClockwise";
         },
         weekdayTextStartOffset(dayIndex) {
             const textCenterAngleDegrees = normalizedDegrees(this.weekdayTextCenterAngleDegrees(dayIndex));
-            const pathAngleDegrees = this.isLowerHalfAngle(textCenterAngleDegrees)
+            const pathAngleDegrees = this.weekdayTextUsesCounterclockwisePath(dayIndex)
                 ? 360 - textCenterAngleDegrees
                 : textCenterAngleDegrees;
             return `${pathAngleDegrees / 360 * 100}%`;
+        },
+        weekdayTextUsesCounterclockwisePath(dayIndex) {
+            return this.visuals.allWeekdaysUpright
+                && this.isLowerHalfAngle(this.weekdayTextCenterAngleDegrees(dayIndex));
         },
         weekdayTextLength() {
             const factor = 0.9;  // Shorter names create spacing.
@@ -570,7 +585,7 @@ function createClockApp() {
 
         // Lifecycle.
         setupUpdate() {
-            this.setParams("chaoticHours");
+            this.setParams("oneWeekRotation");
             this.updateClock();
             setInterval(() => this.updateClock(), 1000);
         }

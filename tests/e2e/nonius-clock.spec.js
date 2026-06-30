@@ -297,6 +297,7 @@ test("week rotation preset advances one seventh of a turn per civil day", async 
 
     await page.locator(".advanced-parameters > summary").click();
     await page.getByRole("button", { name: "Week rotation" }).click();
+    await expect(page.locator("#allWeekdaysUpright")).toBeChecked();
 
     await expect(page.locator("#weekdayScale")).toBeVisible();
     await expect(page.locator(".weekdayName")).toHaveCount(7);
@@ -426,6 +427,45 @@ test("week rotation keeps lower weekday labels upright", async ({ page }) => {
         1300 / 14,
     ].forEach((expectedStartOffsetPercent, index) => {
         expect(result.labels[index].startOffsetPercent).toBeCloseTo(expectedStartOffsetPercent, 4);
+    });
+});
+
+test("all weekdays upright can be disabled", async ({ page }) => {
+    await gotoClock(page);
+
+    await page.locator(".advanced-parameters > summary").click();
+    await page.getByRole("button", { name: "Week rotation" }).click();
+    await page.locator("#allWeekdaysUpright").uncheck();
+
+    const result = await page.evaluate(() => {
+        const app = window.__noniusClockApp;
+        return Array.from(document.querySelectorAll(".weekdayName"), (text, index) => {
+            const textPath = text.querySelector("textPath");
+            const startOffset = textPath.startOffset?.baseVal?.valueAsString
+                || textPath.getAttribute("startOffset")
+                || textPath.getAttribute("startoffset");
+            return {
+                href: textPath.getAttribute("href"),
+                startOffsetPercent: Number.parseFloat(startOffset),
+                usesCounterclockwisePath: app.weekdayTextUsesCounterclockwisePath(index),
+            };
+        });
+    });
+
+    result.forEach(label => {
+        expect(label.href).toBe("#weekdayTextPathClockwise");
+        expect(label.usesCounterclockwisePath).toBe(false);
+    });
+    [
+        100 / 14,
+        300 / 14,
+        500 / 14,
+        50,
+        900 / 14,
+        1100 / 14,
+        1300 / 14,
+    ].forEach((expectedStartOffsetPercent, index) => {
+        expect(result[index].startOffsetPercent).toBeCloseTo(expectedStartOffsetPercent, 4);
     });
 });
 
