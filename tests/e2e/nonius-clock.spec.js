@@ -333,8 +333,8 @@ test("week rotation keeps lower weekday labels upright", async ({ page }) => {
             layout: {
                 weekdayTextRadius: window.__noniusClockApp.visuals.weekdayTextRadius,
                 fixedMinuteRingCenterRadius: (
-                    window.__noniusClockApp.visuals.radiusOfRotatingDial
-                    + window.__noniusClockApp.visuals.radiusOfOuterDial
+                    window.__noniusClockApp.visuals.outerDial.innerRadius
+                    + window.__noniusClockApp.visuals.outerDial.outerRadius
                 ) / 2,
                 weekdayTextLength: window.__noniusClockApp.weekdayTextLength(),
                 weekdayFontSize: getComputedStyle(document.querySelector(".weekdayName")).fontSize,
@@ -418,7 +418,7 @@ test("week rotation keeps lower weekday labels upright", async ({ page }) => {
     });
 
     expect(result.layout.weekdayTextRadius).toBeCloseTo(result.layout.fixedMinuteRingCenterRadius, 9);
-    expect(result.layout.weekdayFontSize).toBe("36px");
+    expect(result.layout.weekdayFontSize).toBe("32px");
     expect(result.layout.weekdayDominantBaseline).toBe("central");
     expect(result.layout.hourNumeralCircleCount).toBe(0);
     expect(result.layout.minuteNumeralCircleCount).toBe(0);
@@ -628,7 +628,7 @@ test("weekday pointer extends marker zero without hiding its hour highlight", as
     const result = await page.evaluate(() => {
         const app = window.__noniusClockApp;
         const weekdayPointer = document.querySelector(".weekdayPointer.isWeekdayPointer");
-        const weekdayPointerPath = document.querySelector("#weekdayPointerPath");
+        const weekdayPointerPath = document.querySelector("#weekdayPointer");
         const weekdayPointerClipPath = document.querySelector("#weekdayPointerClipPath path");
         const hourHighlight = document.querySelector(".rotatingHourMarker.isMarkerHighlighted");
 
@@ -641,19 +641,14 @@ test("weekday pointer extends marker zero without hiding its hour highlight", as
             hourHighlightHref: hourHighlight?.getAttribute("href"),
             weekdayPointerPath: weekdayPointerPath?.getAttribute("d"),
             expectedWeekdayPointerPath: app.markerPath(
-                app.visuals.rotatingHourMarkerOuterRadius,
-                app.visuals.radiusOfRotatingDial,
-                app.rotatingHourMarkerSpanDegrees,
-                true
+                app.visuals.weekdayPointer,
+                app.hourMarkerSpanDegrees
             ),
             weekdayPointerClipPath: weekdayPointerClipPath?.getAttribute("d"),
-            expectedWeekdayPointerClipPath: app.ringClipPath(
-                app.visuals.rotatingHourMarkerOuterRadius,
-                app.visuals.radiusOfRotatingDial
-            ),
-            rotatingHourMarkerOuterRadius: app.visuals.rotatingHourMarkerOuterRadius,
-            rotatingDialRadius: app.visuals.radiusOfRotatingDial,
-            fixedOuterDialRadius: app.visuals.radiusOfOuterDial,
+            expectedWeekdayPointerClipPath: app.ringClipPath(app.visuals.weekdayPointer),
+            rotatingHourMarkerOuterRadius: app.visuals.rotatingHourMarker.outerRadius,
+            rotatingDialRadius: app.visuals.rotatingDial.outerRadius,
+            fixedOuterDialRadius: app.visuals.outerDial.outerRadius,
         };
     });
 

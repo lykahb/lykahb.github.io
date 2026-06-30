@@ -21,6 +21,7 @@ const SECONDS_PER_DAY = 24 * 60 * 60;
 const DAYS_FROM_CIVIL_ZERO_TO_MONDAY = 4;
 const PHI = 1.61803398875; // golden ratio
 const MARKER_OVERSHOOT = 4;
+const OUTER_DIAL_OUTER_RADIUS = 198;  // Leave space to prevent cropping the stroke
 
 const WEEKDAY_TEXT_OPTIONS = {
     fullEnglish: [
@@ -161,6 +162,10 @@ function normalizedDegrees(angleDegrees) {
     return ((angleDegrees % 360) + 360) % 360;
 }
 
+function range(length) {
+    return Array.from({length}, (x, index) => index);
+}
+
 function rotationTransform(angleDegrees) {
     // Keep the logical angle unbounded and civil-time based, but do not
     // pass huge values such as rotate(-2970144.3) to the browser. When
@@ -244,7 +249,6 @@ function createClockApp() {
 
         visuals: {
             viewPortSize: 400,
-            radiusOfOuterDial: 198,
             minuteNumeralEvery: 5,
             minuteNumeral0: false,
             minuteNumeral59: false,
@@ -256,36 +260,62 @@ function createClockApp() {
             theme: "solarized-light",
 
             get radiusOfInnerFixedDial() {
-                return this.radiusOfOuterDial * (1 - 1 / PHI);
+                return OUTER_DIAL_OUTER_RADIUS * (1 - 1 / PHI);
             },
-            get radiusOfRotatingDial() {
-                return this.radiusOfInnerFixedDial + (this.radiusOfOuterDial - this.radiusOfInnerFixedDial) / PHI;
+            get rotatingDial() {
+                const innerRadius = this.radiusOfInnerFixedDial;
+                return {
+                    innerRadius,
+                    outerRadius: innerRadius + (OUTER_DIAL_OUTER_RADIUS - innerRadius) / PHI
+                };
             },
-            get fixedMinuteMarkerLength() {
-                return this.radiusOfOuterDial - this.radiusOfRotatingDial;
+            get outerDial() {
+                return {
+                    innerRadius: this.rotatingDial.outerRadius,
+                    outerRadius: OUTER_DIAL_OUTER_RADIUS
+                };
             },
-            get fixedHourMarkerLength() {
-                return this.radiusOfInnerFixedDial * (1 - 1 / PHI);
+            get fixedMinuteMarker() {
+                return this.outerDial;
             },
-            get rotatingMinuteMarkerLength() {
-                return this.radiusOfRotatingDial - this.radiusOfInnerFixedDial;
+            get rotatingMinuteMarker() {
+                return {
+                    innerRadius: this.rotatingDial.innerRadius,
+                    outerRadius: this.rotatingDial.outerRadius
+                };
             },
-            get rotatingHourMarkerOuterRadius() {
-                return this.radiusOfInnerFixedDial + this.rotatingMinuteMarkerLength / PHI;
+            get fixedHourMarker() {
+                return {
+                    innerRadius: this.rotatingDial.innerRadius / PHI,
+                    outerRadius: this.rotatingDial.innerRadius
+                };
+            },
+            get rotatingHourMarker() {
+                return {
+                    innerRadius: this.rotatingDial.innerRadius,
+                    outerRadius: this.rotatingDial.innerRadius
+                        + (this.rotatingDial.outerRadius - this.rotatingDial.innerRadius) / PHI
+                };
+            },
+            get weekdayPointer() {
+                return {
+                    innerRadius: this.rotatingHourMarker.outerRadius,
+                    outerRadius: this.rotatingDial.outerRadius
+                };
             },
             get weekdayTextRadius() {
-                return (this.radiusOfRotatingDial + this.radiusOfOuterDial) / 2;
+                return (this.outerDial.innerRadius + this.outerDial.outerRadius) / 2;
             },
             get minuteNumeralRadius() {
-                return (this.radiusOfRotatingDial + this.radiusOfOuterDial) / 2;
+                return (this.outerDial.innerRadius + this.outerDial.outerRadius) / 2;
             },
             get hourNumeralRadius() {
-                return this.radiusOfInnerFixedDial - this.fixedHourMarkerLength / 2;
+                return (this.fixedHourMarker.innerRadius + this.fixedHourMarker.outerRadius) / 2;
             },
             get minutesWithNumerals() {
                 const showZero = this.minuteNumeral0 || this.minuteNumeralEvery === 1;
 
-                return Array.from({length: 60}, (x, minute) => minute)
+                return range(60)
                     .filter(minute => showZero || minute !== 0)
                     .filter(minute => minute % this.minuteNumeralEvery === 0
                         || (this.minuteNumeral59 && minute === 59))
@@ -370,8 +400,14 @@ function createClockApp() {
         get rotatingHourMarkerPhaseDegrees() {
             return this.isCurrentBestAlignment ? -this.params.rotatingDialDegreesPerHour / 2 : 0;
         },
-        get rotatingHourMarkerSpanDegrees() {
+        get minuteMarkerSpanDegrees() {
+            return this.visuals.minuteMarkerThicknessFactor * Math.abs(this.params.rotatingDialDegreesPerMinute);
+        },
+        get hourMarkerSpanDegrees() {
             return 60 * Math.abs(this.params.rotatingDialDegreesPerMinute);
+        },
+        get rotatingHourMarkerSpanDegrees() {
+            return this.hourMarkerSpanDegrees;
         },
         get selectedParamPreset() {
             return Object.keys(PARAM_PRESETS).find(option => this.paramPresetMatches(option)) || null;
@@ -390,9 +426,9 @@ function createClockApp() {
         get weekdayScaleDirection() {
             return Math.sign(this.params.rotatingDialDegreesPerSecond) || 1;
         },
-
         // Pure helpers exposed for test access.
         civilSeconds,
+        range,
         rotationDegreesForSeconds(seconds) {
             return seconds * this.params.rotatingDialDegreesPerSecond;
         },
@@ -505,8 +541,9 @@ function createClockApp() {
         },
 
         // SVG rendering helpers.
-        markerPath(innerRadius, outerRadius, markerSpanDegrees, closePath) {
+        markerPath(ring, markerSpanDegrees) {
             // Marker is shaped like a trapeze. It overshoots its radial endpoints and is clipped to its ring.
+            const {innerRadius, outerRadius} = ring;
             const markerSpanRadians = markerSpanDegrees * Math.PI / 180;
             const halfMarkerSpanRadians = markerSpanRadians / 2;
             const radialDirection = Math.sign(outerRadius - innerRadius) || 1;
@@ -520,10 +557,11 @@ function createClockApp() {
                 L${this.centerCoordX - outerHorizontalOffset},${this.centerCoordY - outerVerticalOffset}
                 l${2 * outerHorizontalOffset},0
                 L${this.centerCoordX + innerHorizontalOffset},${this.centerCoordY - innerVerticalOffset}
-                ${closePath ? "z" : ""}`;
+                z`;
         },
-        ringClipPath(innerRadius, outerRadius) {
+        ringClipPath(ring) {
             const RING_CLIP_BLEED = 0.1;  // A tiny overlap prevents blank pixels from antialising
+            const {innerRadius, outerRadius} = ring;
             const inner = Math.max(0, Math.min(innerRadius, outerRadius) - RING_CLIP_BLEED);
             const outer = Math.max(innerRadius, outerRadius) + RING_CLIP_BLEED;
             if (inner === 0) {
@@ -591,6 +629,9 @@ function createClockApp() {
             // instead of between 11 and 12.
             const stepsBeforeTwelve = (this.params.numberOfHours - hourIndex) % this.params.numberOfHours;
             return -stepsBeforeTwelve * this.params.fixedHourMarkerStepDegrees;
+        },
+        rotationAboutCenter(angleDegrees) {
+            return `rotate(${angleDegrees} ${this.centerCoordX} ${this.centerCoordY})`;
         },
         rotatingMinuteMarkerAngleDegrees(markerIndex) {
             return markerIndex * this.params.rotatingMinuteMarkerSpacingDegrees + this.rotatingMinuteMarkerPhaseDegrees;

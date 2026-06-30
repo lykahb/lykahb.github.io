@@ -528,19 +528,19 @@
     <svg id="clock" viewBox="0 0 400 400" :data-theme="visuals.theme" @vue:mounted="setupUpdate">
         <defs>
             <clipPath id="fixedMinuteMarkerClipPath">
-                <path :d="ringClipPath(visuals.radiusOfRotatingDial, visuals.radiusOfOuterDial)" clip-rule="evenodd"></path>
+                <path :d="ringClipPath(visuals.fixedMinuteMarker)" clip-rule="evenodd"></path>
             </clipPath>
             <clipPath id="rotatingMinuteMarkerClipPath">
-                <path :d="ringClipPath(visuals.radiusOfInnerFixedDial, visuals.radiusOfRotatingDial)" clip-rule="evenodd"></path>
+                <path :d="ringClipPath(visuals.rotatingMinuteMarker)" clip-rule="evenodd"></path>
             </clipPath>
             <clipPath id="fixedHourMarkerClipPath">
-                <path :d="ringClipPath(visuals.radiusOfInnerFixedDial - visuals.fixedHourMarkerLength, visuals.radiusOfInnerFixedDial)" clip-rule="evenodd"></path>
+                <path :d="ringClipPath(visuals.fixedHourMarker)" clip-rule="evenodd"></path>
             </clipPath>
             <clipPath id="rotatingHourMarkerClipPath">
-                <path :d="ringClipPath(visuals.radiusOfInnerFixedDial, visuals.rotatingHourMarkerOuterRadius)" clip-rule="evenodd"></path>
+                <path :d="ringClipPath(visuals.rotatingHourMarker)" clip-rule="evenodd"></path>
             </clipPath>
             <clipPath id="weekdayPointerClipPath">
-                <path :d="ringClipPath(visuals.rotatingHourMarkerOuterRadius, visuals.radiusOfRotatingDial)" clip-rule="evenodd"></path>
+                <path :d="ringClipPath(visuals.weekdayPointer)" clip-rule="evenodd"></path>
             </clipPath>
             <!-- The visible numeral halo uses a rounded SVG text stroke because that has the
                  cleanest outside shape. This filter only creates a paper backing from closed
@@ -553,36 +553,37 @@
                 <feComposite in="paper" in2="closed" operator="in"></feComposite>
             </filter>
             <path id="rotatingMinuteMarker"
-                :d="markerPath(visuals.radiusOfInnerFixedDial, visuals.radiusOfRotatingDial, visuals.minuteMarkerThicknessFactor * Math.abs(params.rotatingDialDegreesPerMinute), false)"></path>
+                :d="markerPath(visuals.rotatingMinuteMarker, minuteMarkerSpanDegrees)"></path>
             <path id="fixedMinuteMarker"
-                :d="markerPath(visuals.radiusOfOuterDial - visuals.fixedMinuteMarkerLength, visuals.radiusOfOuterDial, visuals.minuteMarkerThicknessFactor * Math.abs(params.rotatingDialDegreesPerMinute), false)"></path>
-            <path id="fixedHourMarkerPath"
-                :d="markerPath(visuals.radiusOfInnerFixedDial, visuals.radiusOfInnerFixedDial - visuals.fixedHourMarkerLength, 60 * Math.abs(params.rotatingDialDegreesPerMinute), false)"></path>
-            <use id="fixedHourMarker" href="#fixedHourMarkerPath" paint-order="fill"></use>
-            <path id="rotatingHourMarkerPath"
-                :d="markerPath(visuals.radiusOfInnerFixedDial, visuals.rotatingHourMarkerOuterRadius, rotatingHourMarkerSpanDegrees, false)"></path>
-            <path id="weekdayPointerPath"
-                :d="markerPath(visuals.rotatingHourMarkerOuterRadius, visuals.radiusOfRotatingDial, rotatingHourMarkerSpanDegrees, true)"></path>
-            <use id="rotatingHourMarker" href="#rotatingHourMarkerPath" paint-order="fill"></use>
-            <use id="weekdayPointer" href="#weekdayPointerPath" paint-order="fill"></use>
+                :d="markerPath(visuals.fixedMinuteMarker, minuteMarkerSpanDegrees)"></path>
+            <path id="fixedHourMarker"
+                :d="markerPath(visuals.fixedHourMarker, hourMarkerSpanDegrees)"
+                paint-order="fill"></path>
+            <path id="rotatingHourMarker"
+                :d="markerPath(visuals.rotatingHourMarker, hourMarkerSpanDegrees)"
+                paint-order="fill"></path>
+            <path id="weekdayPointer"
+                :d="markerPath(visuals.weekdayPointer, hourMarkerSpanDegrees)"
+                paint-order="fill"></path>
         </defs>
         <g id="outerDial">
             <!-- SVG paints in DOM order; draw fills first, clipped markers next, and boundary strokes last. -->
-            <circle class="outerDialCircleFill" :cx="centerCoordX" :cy="centerCoordY" :r="visuals.radiusOfOuterDial"></circle>
+            <circle class="outerDialCircleFill" :cx="centerCoordX" :cy="centerCoordY" :r="visuals.outerDial.outerRadius"></circle>
 
             <g clip-path="url(#fixedMinuteMarkerClipPath)">
-                <g v-for="i in Array.from({length: 60}, (x, i) => i)"
+                <g v-for="i in range(60)"
+                    :key="i"
                     class="minuteMarker"
-                    :transform="`rotate(${i * params.fixedMinuteMarkerStepDegrees} ${centerCoordX} ${centerCoordY})`">
+                    :transform="rotationAboutCenter(i * params.fixedMinuteMarkerStepDegrees)">
                     <use href="#fixedMinuteMarker" class="fixedMinuteMarker"></use>
                 </g>
                 <use v-if="visuals.highlightAlignedMarkers"
                     href="#fixedMinuteMarker"
                     class="fixedMinuteMarker isMarkerHighlighted"
-                    :transform="`rotate(${time.minutes * params.fixedMinuteMarkerStepDegrees} ${centerCoordX} ${centerCoordY})`"></use>
+                    :transform="rotationAboutCenter(time.minutes * params.fixedMinuteMarkerStepDegrees)"></use>
             </g>
 
-            <circle class="outerDialCircleStroke" :cx="centerCoordX" :cy="centerCoordY" :r="visuals.radiusOfOuterDial"></circle>
+            <circle class="outerDialCircleStroke" :cx="centerCoordX" :cy="centerCoordY" :r="visuals.outerDial.outerRadius"></circle>
 
             <g v-if="visuals.showWeekdayRing" id="weekdayScale">
                 <path id="weekdayTextPathClockwise"
@@ -620,31 +621,33 @@
             @transitionend="finishRotatingDialTransition($event)"
             :transform="rotationTransform(rotatingDialAngleDegrees)">
             <g clip-path="url(#rotatingMinuteMarkerClipPath)">
-                <use v-for="i in Array.from({length: params.numberOfMarksForMinutesOnRotatingDial}, (x, i) => i)"
+                <use v-for="i in range(params.numberOfMarksForMinutesOnRotatingDial)"
+                    :key="i"
                     href="#rotatingMinuteMarker"
-                    :transform="`rotate(${rotatingMinuteMarkerAngleDegrees(i)} ${centerCoordX} ${centerCoordY})`"
+                    :transform="rotationAboutCenter(rotatingMinuteMarkerAngleDegrees(i))"
                     class="rotatingMinuteMarker">
                 </use>
                 <use v-if="visuals.highlightAlignedMarkers"
                     href="#rotatingMinuteMarker"
                     class="rotatingMinuteMarker isMarkerHighlighted"
-                    :transform="`rotate(${rotatingMinuteMarkerAngleDegrees(alignedRotatingMinuteMarkerIndex)} ${centerCoordX} ${centerCoordY})`"></use>
+                    :transform="rotationAboutCenter(rotatingMinuteMarkerAngleDegrees(alignedRotatingMinuteMarkerIndex))"></use>
             </g>
             <g clip-path="url(#rotatingHourMarkerClipPath)">
-                <use v-for="i in Array.from({length: params.numberOfMarksForHoursOnRotatingDial}, (x, i) => i)"
+                <use v-for="i in range(params.numberOfMarksForHoursOnRotatingDial)"
+                    :key="i"
                     href="#rotatingHourMarker"
-                    :transform="`rotate(${rotatingHourMarkerAngleDegrees(i)} ${centerCoordX} ${centerCoordY})`"
+                    :transform="rotationAboutCenter(rotatingHourMarkerAngleDegrees(i))"
                     class="rotatingHourMarker">
                 </use>
                 <use v-if="visuals.showWeekdayRing && isCurrentBestAlignment"
                     href="#rotatingHourMarker"
-                    :transform="`rotate(0 ${centerCoordX} ${centerCoordY})`"
+                    :transform="rotationAboutCenter(0)"
                     class="weekdayPointerRoot">
                 </use>
             </g>
             <g v-if="visuals.showWeekdayRing" clip-path="url(#weekdayPointerClipPath)">
                 <use href="#weekdayPointer"
-                    :transform="`rotate(0 ${centerCoordX} ${centerCoordY})`"
+                    :transform="rotationAboutCenter(0)"
                     class="weekdayPointer isWeekdayPointer">
                 </use>
             </g>
@@ -652,26 +655,28 @@
                 <use v-if="visuals.highlightAlignedMarkers"
                     href="#rotatingHourMarker"
                     class="rotatingHourMarker isMarkerHighlighted"
-                    :transform="`rotate(${rotatingHourMarkerAngleDegrees(alignedRotatingHourMarkerIndex)} ${centerCoordX} ${centerCoordY})`">
+                    :transform="rotationAboutCenter(rotatingHourMarkerAngleDegrees(alignedRotatingHourMarkerIndex))">
                 </use>
             </g>
         </g>
-        <circle :cx="centerCoordX" :cy="centerCoordY" :r="visuals.radiusOfRotatingDial" class="rotatingDialOuterCircleStroke"></circle>
+        <circle :cx="centerCoordX" :cy="centerCoordY" :r="visuals.rotatingDial.outerRadius" class="rotatingDialOuterCircleStroke"></circle>
 
         <g id="innerHourMarkers" clip-path="url(#fixedHourMarkerClipPath)">
-            <g v-for="i in Array.from({length: params.numberOfHours}, (x, i) => i)"
+            <g v-for="i in range(params.numberOfHours)"
+                :key="i"
                 class="hourMarker"
-                :transform="`rotate(${fixedHourMarkerAngleDegrees(i)} ${centerCoordX} ${centerCoordY})`">
+                :transform="rotationAboutCenter(fixedHourMarkerAngleDegrees(i))">
                 <use href="#fixedHourMarker" class="fixedHourMarker"></use>
             </g>
             <use v-if="visuals.highlightAlignedMarkers"
                 href="#fixedHourMarker"
                 class="fixedHourMarker isMarkerHighlighted"
-                :transform="`rotate(${fixedHourMarkerAngleDegrees(time.hours % params.numberOfHours)} ${centerCoordX} ${centerCoordY})`"></use>
+                :transform="rotationAboutCenter(fixedHourMarkerAngleDegrees(time.hours % params.numberOfHours))"></use>
         </g>
-        <circle :cx="centerCoordX" :cy="centerCoordY" :r="visuals.radiusOfInnerFixedDial" class="rotatingDialInnerCircleStroke"></circle>
+        <circle :cx="centerCoordX" :cy="centerCoordY" :r="visuals.rotatingDial.innerRadius" class="rotatingDialInnerCircleStroke"></circle>
         <g id="innerHourDial">
-            <g v-for="i in Array.from({length: params.numberOfHours}, (x, i) => i)"
+            <g v-for="i in range(params.numberOfHours)"
+                :key="i"
                 class="hourNumeral">
                 <text class="numeralInteriorFill" aria-hidden="true" filter="url(#numeralInteriorFill)"
                     :x="hourNumeralPoint(i).x" :y="hourNumeralPoint(i).y"
