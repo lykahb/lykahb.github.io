@@ -89,7 +89,7 @@ const PARAM_PRESETS = {
         areFixedHoursShorter: false,
         areFixedMinutesShorter: false,
         spacingMultipleForFixedMinuteMarks: 2,
-        minuteNumeralEvery: 15,
+        minuteNumeralEvery: 5,
         minuteNumeral59: true,
         showWeekdayRing: true
     }

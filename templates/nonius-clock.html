@@ -326,26 +326,21 @@
         stroke: none;
     }
 
-    .hourNumeral > circle {
-        r: 8px;
-        stroke: var(--clock-ink);
-        fill: var(--clock-paper);
-        stroke-width: 2.4px;
-    }
-
     .hourNumeral {
         font-size: 10px;
     }
 
-    .minuteNumeral > circle {
-        r: 13px;
-        stroke: var(--clock-ink);
-        fill: var(--clock-paper);
-        stroke-width: 2.4px;
+    .minuteNumeral {
+        font-size: 12px;
     }
 
-    .minuteNumeral {
-        font-size: 17px;
+    .hourNumeral text,
+    .minuteNumeral text {
+        fill: var(--clock-ink);
+        stroke: var(--clock-paper);
+        stroke-linejoin: round;
+        stroke-width: 4px;
+        paint-order: stroke fill;
     }
 
     .rotatingDialInnerCircleStroke,
@@ -491,7 +486,6 @@
                 :key="i"
                 class="minuteNumeral"
                 :transform="`rotate(${i * params.fixedMinuteMarkerStepDegrees} ${centerCoordX} ${centerCoordY})`">
-                <circle :cx="centerCoordX" :cy="centerCoordY - visuals.radiusOfOuterDial + (visuals.radiusOfOuterDial - visuals.radiusOfRotatingDial) / 2"></circle>
                 <text :x="centerCoordX" :y="centerCoordY - visuals.radiusOfOuterDial + (visuals.radiusOfOuterDial - visuals.radiusOfRotatingDial) / 2"
                     text-anchor="middle" dominant-baseline="central"
                     :transform="`rotate(${-i * params.fixedMinuteMarkerStepDegrees} ${centerCoordX} ${centerCoordY - visuals.radiusOfOuterDial + (visuals.radiusOfOuterDial - visuals.radiusOfRotatingDial) / 2})`">
@@ -557,8 +551,6 @@
             <g v-for="i in Array.from({length: params.numberOfHours}, (x, i) => i)"
                 class="hourNumeral"
                 :transform="`rotate(${fixedHourMarkerAngleDegrees(i)} ${centerCoordX} ${centerCoordY})`">
-                <circle :cx="centerCoordX"
-                    :cy="centerCoordY - visuals.radiusOfInnerFixedDial + (visuals.radiusOfInnerFixedDial * (1 - 1 / PHI)) / 2"></circle>
                 <text :x="centerCoordX" :y="centerCoordY - visuals.radiusOfInnerFixedDial + (visuals.radiusOfInnerFixedDial * (1 - 1 / PHI)) / 2"
                     text-anchor="middle" dominant-baseline="central"
                     :transform="`rotate(${-fixedHourMarkerAngleDegrees(i)} ${centerCoordX} ${centerCoordY - visuals.radiusOfInnerFixedDial + (visuals.radiusOfInnerFixedDial * (1 - 1 / PHI)) / 2})`">

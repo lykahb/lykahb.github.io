@@ -338,7 +338,25 @@ test("week rotation keeps lower weekday labels upright", async ({ page }) => {
                 weekdayTextLength: window.__noniusClockApp.weekdayTextLength(),
                 weekdayFontSize: getComputedStyle(document.querySelector(".weekdayName")).fontSize,
                 weekdayDominantBaseline: getComputedStyle(document.querySelector(".weekdayName")).dominantBaseline,
+                hourNumeralCircleCount: document.querySelectorAll(".hourNumeral circle").length,
+                minuteNumeralCircleCount: document.querySelectorAll(".minuteNumeral circle").length,
             },
+            hourNumerals: Array.from(document.querySelectorAll(".hourNumeral text"), text => {
+                const style = getComputedStyle(text);
+                return {
+                    stroke: style.stroke,
+                    strokeWidth: style.strokeWidth,
+                    paintOrder: style.paintOrder,
+                };
+            }),
+            minuteNumerals: Array.from(document.querySelectorAll(".minuteNumeral text"), text => {
+                const style = getComputedStyle(text);
+                return {
+                    stroke: style.stroke,
+                    strokeWidth: style.strokeWidth,
+                    paintOrder: style.paintOrder,
+                };
+            }),
             weekdayNames: WEEKDAYS,
             textGuides: Array.from(document.querySelectorAll(".weekdayTextGuide"), path => ({
                 id: path.id,
@@ -370,6 +388,18 @@ test("week rotation keeps lower weekday labels upright", async ({ page }) => {
     expect(result.layout.weekdayTextRadius).toBeCloseTo(result.layout.fixedMinuteRingCenterRadius, 9);
     expect(result.layout.weekdayFontSize).toBe("36px");
     expect(result.layout.weekdayDominantBaseline).toBe("central");
+    expect(result.layout.hourNumeralCircleCount).toBe(0);
+    expect(result.layout.minuteNumeralCircleCount).toBe(0);
+    result.hourNumerals.forEach(numeral => {
+        expect(numeral.stroke).not.toBe("none");
+        expect(numeral.strokeWidth).toBe("4px");
+        expect(numeral.paintOrder).toContain("stroke");
+    });
+    result.minuteNumerals.forEach(numeral => {
+        expect(numeral.stroke).not.toBe("none");
+        expect(numeral.strokeWidth).toBe("4px");
+        expect(numeral.paintOrder).toContain("stroke");
+    });
     expect(result.textGuides).toEqual([
         { id: "weekdayTextPathClockwise", sweepFlags: ["1", "1"] },
         { id: "weekdayTextPathCounterclockwise", sweepFlags: ["0", "0"] },
