@@ -1,0 +1,950 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Borys Lykah is a software engineer focused on robust systems, functional programming, Haskell, and useful tools.">
+  <title>Nonius Clock</title>
+  <link rel="stylesheet" href="/css/default.css">
+</head>
+<body>
+  <a class="skip-link" href="#content">Skip to content</a>
+  <header class="site-header">
+    <div class="site-shell site-header-inner">
+      <a class="brand" href="/" aria-label="Borys Lykah home">
+        <span class="brand-name">Borys Lykah</span>
+      </a>
+      <nav class="site-nav" aria-label="Primary navigation">
+        <a href="/">Home</a>
+        <a href="/projects">Projects</a>
+      </nav>
+    </div>
+  </header>
+  <main id="content" class="site-main site-shell">
+    
+<script type="application/javascript" src="/js/petite-vue-0.4.1.js"></script>
+<script type="application/javascript" src="/projects/nonius-clock/js/nonius-clock.js"></script>
+
+<style>
+    #clockAndControls {
+        display: grid;
+        width: 100%;
+        max-width: none;
+        grid-template-columns: 1fr;
+        gap: 1.6rem;
+        align-items: start;
+    }
+
+    #clock {
+        width: 100%;
+        height: auto;
+        aspect-ratio: 1;
+    }
+
+    #controls {
+        display: grid;
+        width: min(100%, 72rem);
+        gap: 1.2rem;
+        align-self: start;
+        justify-self: center;
+        font-size: 1.4rem;
+    }
+
+    .control-section {
+        display: grid;
+        gap: 1rem;
+        padding: 0;
+        border: 0;
+        border-radius: 0;
+        background: transparent;
+    }
+
+    .control-section+.control-section {
+        padding-top: 1.4rem;
+        border-top: 1px solid rgba(220, 228, 221, 0.9);
+    }
+
+    .control-section h4 {
+        margin: 0 0 0.2rem;
+        font-size: 1.5rem;
+        line-height: 1.2;
+    }
+
+    .advanced-parameters {
+        gap: 1.2rem;
+    }
+
+    .advanced-parameters>summary {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        margin: 0;
+        color: #17201c;
+        font-size: 1.5rem;
+        font-weight: 760;
+        line-height: 1.2;
+        cursor: pointer;
+    }
+
+    .advanced-parameters>summary::-webkit-details-marker {
+        display: none;
+    }
+
+    .advanced-parameters>summary::after {
+        content: "+";
+        color: #237869;
+        font-size: 1.8rem;
+        line-height: 1;
+    }
+
+    .advanced-parameters[open]>summary::after {
+        content: "-";
+    }
+
+    .control-subsection {
+        display: grid;
+        gap: 1rem;
+    }
+
+    .control-subsection+.control-subsection {
+        margin-top: 1rem;
+        padding-top: 1.2rem;
+        border-top: 1px solid rgba(220, 228, 221, 0.9);
+    }
+
+    .control-subsection h5 {
+        margin: 0;
+        color: #17201c;
+        font-size: 1.25rem;
+        line-height: 1.2;
+    }
+
+    .control-row {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(9rem, 13rem);
+        gap: 1rem;
+        align-items: center;
+    }
+
+    .choice-row {
+        grid-template-columns: 1fr;
+        gap: 0.7rem;
+    }
+
+    .time-row {
+        grid-template-columns: 1fr;
+        gap: 0.7rem;
+    }
+
+    .control-row>label,
+    .control-row>.labelForInputGroup {
+        color: #34433b;
+        line-height: 1.3;
+    }
+
+    .time-actions,
+    .button-grid,
+    .choice-grid {
+        display: grid;
+        gap: 0.8rem;
+    }
+
+    .time-actions {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .choice-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .theme-grid {
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
+    }
+
+    .theme-choice {
+        align-items: center;
+        min-height: 3.2rem;
+    }
+
+    .theme-swatch {
+        display: grid;
+        flex: 0 0 auto;
+        width: 2.4rem;
+        height: 2.4rem;
+        overflow: hidden;
+        border: 1px solid #dce4dd;
+        border-radius: 50%;
+        background: var(--swatch-paper);
+    }
+
+    .theme-swatch::before,
+    .theme-swatch::after {
+        content: "";
+        grid-area: 1 / 1;
+    }
+
+    .theme-swatch::before {
+        width: 50%;
+        height: 50%;
+        align-self: end;
+        justify-self: end;
+        background: var(--swatch-marker);
+    }
+
+    .theme-swatch::after {
+        width: 50%;
+        height: 50%;
+        justify-self: end;
+        background: var(--swatch-accent);
+    }
+
+    .button-grid {
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr));
+    }
+
+    .button-grid button {
+        white-space: normal;
+    }
+
+    #controls input[type='number'],
+    #controls input[type='datetime-local'] {
+        width: 100%;
+        min-height: 3.8rem;
+        padding: 0.7rem 0.9rem;
+        border: 1px solid #dce4dd;
+        border-radius: 6px;
+        background: #fff;
+        color: #17201c;
+        font: inherit;
+    }
+
+    #controls input:disabled {
+        border-color: #c9d2cc;
+        background:
+            repeating-linear-gradient(-45deg,
+                #eef3ee 0,
+                #eef3ee 6px,
+                #e4ebe5 6px,
+                #e4ebe5 12px);
+        color: #65706a;
+        cursor: not-allowed;
+        opacity: 1;
+    }
+
+    #controls input[type='number']:focus,
+    #controls input[type='datetime-local']:focus,
+    .choice:focus-within {
+        outline: 2px solid rgba(35, 120, 105, 0.22);
+        outline-offset: 2px;
+        border-color: #237869;
+    }
+
+    #controls input[type='number']:not(:disabled):invalid,
+    #controls input[type='datetime-local']:not(:disabled):invalid {
+        border-color: #b84a42;
+        background: #fff4f2;
+        color: #5b1f1a;
+    }
+
+    #controls input[type='number']:not(:disabled):invalid:focus,
+    #controls input[type='datetime-local']:not(:disabled):invalid:focus {
+        outline-color: rgba(184, 74, 66, 0.24);
+        border-color: #b84a42;
+    }
+
+    #controls input[type='checkbox'],
+    #controls input[type='radio'] {
+        accent-color: #237869;
+    }
+
+    #controls button {
+        min-height: 3.8rem;
+        padding: 0.8rem 1rem;
+        border: 1px solid #dce4dd;
+        border-radius: 6px;
+        background: #fff;
+        color: #15584d;
+        font: inherit;
+        font-weight: 760;
+        line-height: 1.15;
+        text-align: left;
+        transition:
+            border-color 180ms ease,
+            background-color 180ms ease,
+            color 180ms ease,
+            transform 180ms ease;
+    }
+
+    #controls button:hover {
+        border-color: #237869;
+        background: #eef3ee;
+    }
+
+    #controls button.isSelectedOption {
+        border-color: #237869;
+        background: #dbeae2;
+        color: #073642;
+    }
+
+    .choice {
+        display: flex;
+        align-items: center;
+        gap: 0.8rem;
+        min-height: 2.4rem;
+        padding: 0;
+        border: 0;
+        border-radius: 0;
+        background: transparent;
+        line-height: 1.15;
+    }
+
+    .choice input {
+        flex: 0 0 auto;
+        margin: 0;
+    }
+
+    .checkbox-control {
+        justify-self: start;
+        width: 2rem;
+        height: 2rem;
+    }
+
+    @media (min-width: 1200px) {
+        #clockAndControls {
+            position: relative;
+            left: 50%;
+            width: min(calc(100vw - 4rem), 128rem);
+            grid-template-columns: minmax(0, 1fr) minmax(28rem, 32rem);
+            transform: translateX(-50%);
+        }
+
+        #controls {
+            width: 100%;
+            justify-self: stretch;
+        }
+    }
+
+    @media (max-width: 520px) {
+        .control-row {
+            grid-template-columns: 1fr;
+        }
+
+        .time-actions,
+        .choice-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    #clock {
+        --clock-paper: #fdf6e3;
+        --clock-ink: #073642;
+        --clock-marker: #93a1a1;
+        --clock-marker-strong: #657b83;
+        --clock-highlight: #2c363a;
+        --clock-weekday: var(--clock-ink);
+        --clock-weekday-pointer: #c14f32;
+    }
+
+    #clock[data-theme='catppuccin-latte'] {
+        --clock-paper: #eff1f5;
+        --clock-ink: #4c4f69;
+        --clock-marker: #9ca0b0;
+        --clock-marker-strong: #6c6f85;
+        --clock-highlight: #1e66f5;
+        --clock-weekday: #8839ef;
+        --clock-weekday-pointer: #d20f39;
+    }
+
+    #clock[data-theme='gruvbox-light'] {
+        --clock-paper: #fbf1c7;
+        --clock-ink: #3c3836;
+        --clock-marker: #bdae93;
+        --clock-marker-strong: #7c6f64;
+        --clock-highlight: #458588;
+        --clock-weekday: #8f3f71;
+        --clock-weekday-pointer: #cc241d;
+    }
+
+    #clock[data-theme='nord-night'] {
+        --clock-paper: #2e3440;
+        --clock-ink: #eceff4;
+        --clock-marker: #4c566a;
+        --clock-marker-strong: #81a1c1;
+        --clock-highlight: #a3be8c;
+        --clock-weekday: #d8dee9;
+        --clock-weekday-pointer: #bf616a;
+    }
+
+    #clock[data-theme='dracula'] {
+        --clock-paper: #282a36;
+        --clock-ink: #f8f8f2;
+        --clock-marker: #6272a4;
+        --clock-marker-strong: #8be9fd;
+        --clock-highlight: #f1fa8c;
+        --clock-weekday: #bd93f9;
+        --clock-weekday-pointer: #ff5555;
+    }
+
+    #clock[data-theme='everforest-dark'] {
+        --clock-paper: #2d353b;
+        --clock-ink: #d3c6aa;
+        --clock-marker: #7a8478;
+        --clock-marker-strong: #859289;
+        --clock-highlight: #a7c080;
+        --clock-weekday: #7fbbb3;
+        --clock-weekday-pointer: #e67e80;
+    }
+
+    #clock[data-theme='everforest-light'] {
+        --clock-paper: #fdf6e3;
+        --clock-ink: #5c6a72;
+        --clock-marker: #a6b0a0;
+        --clock-marker-strong: #829181;
+        --clock-highlight: #8da101;
+        --clock-weekday: #3a94c5;
+        --clock-weekday-pointer: #f85552;
+    }
+
+    #clock text {
+        font-family: "Gill Sans MT", Helvetica, Arial, Calibri, "Trebuchet MS", ui-rounded, sans-serif;
+        fill: var(--clock-ink);
+    }
+
+    .hourNumeral text, .minuteNumeral text {
+        font-weight: 600;
+    }
+
+    #innerDial {
+        stroke: var(--clock-ink);
+    }
+
+    #rotatingDial {
+        transform-origin: center;
+        transition: transform 0.2s ease-in-out;
+    }
+
+    .hourMarker>line {
+        stroke: var(--clock-ink);
+    }
+
+    .rotatingMinuteMarker,
+    .fixedMinuteMarker {
+        fill: var(--clock-marker);
+        stroke: none;
+    }
+
+    .rotatingHourMarker,
+    .fixedHourMarker {
+        fill: var(--clock-marker-strong);
+        stroke: none;
+    }
+
+    .weekdayPointer,
+    .weekdayPointerRoot {
+        fill: var(--clock-weekday-pointer);
+        stroke: none;
+    }
+
+    .hourNumeral {
+        font-size: 10px;
+    }
+
+    .minuteNumeral {
+        font-size: 12px;
+    }
+
+    #clock .hourNumeral .numeralInteriorFill,
+    #clock .minuteNumeral .numeralInteriorFill {
+        /* The filter uses SourceAlpha, so this text needs an opaque fill.
+           The visible paper color comes from the filter's feFlood. */
+        fill: #000;
+        stroke: none;
+    }
+
+    #clock .hourNumeral .numeralText,
+    #clock .minuteNumeral .numeralText {
+        fill: var(--clock-ink);
+        stroke: var(--clock-paper);
+        stroke-linejoin: round;
+        stroke-width: 4px;
+        paint-order: stroke fill;
+    }
+
+    .rotatingDialInnerCircleStroke,
+    .rotatingDialOuterCircleStroke {
+        fill: none;
+        /* Display no stroke - it obscures alignment. Semitransparent ones may work better. */
+        stroke: none;
+        stroke-width: 1.4px;
+    }
+
+    .outerDialCircleStroke {
+        fill: none;
+        stroke: var(--clock-ink);
+        stroke-width: 2px;
+    }
+
+    .outerDialCircleFill {
+        fill: var(--clock-paper);
+        stroke: none;
+    }
+
+    .weekdayTextGuide {
+        fill: none;
+        stroke: none;
+    }
+
+    .weekdayName {
+        fill: var(--clock-weekday);
+        dominant-baseline: central;
+        font-size: 32px;
+        font-weight: 800;
+        letter-spacing: 0;
+        stroke-width: 0.5px;
+    }
+
+    .isMarkerHighlighted {
+        fill: var(--clock-highlight);
+    }
+
+    .site-main > section,
+    .site-main > article {
+        max-width: var(--measure);
+    }
+
+    .site-main > hr {
+        margin-block: 4.8rem;
+    }
+
+    .site-main > article > section + section {
+        margin-top: 4rem;
+    }
+
+    .site-main > article h2 {
+        font-size: clamp(2.4rem, 3vw, 3.4rem);
+    }
+</style>
+
+<h1>Nonius Clock</h1>
+
+<section>
+    <p>
+        This clock tells time with one moving part: a rotating ring. Instead of hands, it uses aligned marks on fixed and moving scales.
+    </p>
+
+    <p>
+        To read it, find the aligned minute marks on the outer ring, then the aligned hour marks near the center. The highlighted marks show the current reading while you learn the pattern.
+    </p>
+</section>
+
+<p>
+    Try Current, Midnight, or Random to see different alignments. The presets change the mark layout, and the highlight can be turned off in Advanced parameters.
+</p>
+
+
+<div id="clockAndControls">
+    <svg id="clock" viewBox="0 0 400 400" :data-theme="visuals.theme" @vue:mounted="setupUpdate">
+        <defs>
+            <clipPath id="fixedMinuteMarkerClipPath">
+                <path :d="ringClipPath(visuals.fixedMinuteMarker)" clip-rule="evenodd"></path>
+            </clipPath>
+            <clipPath id="rotatingMinuteMarkerClipPath">
+                <path :d="ringClipPath(visuals.rotatingMinuteMarker)" clip-rule="evenodd"></path>
+            </clipPath>
+            <clipPath id="fixedHourMarkerClipPath">
+                <path :d="ringClipPath(visuals.fixedHourMarker)" clip-rule="evenodd"></path>
+            </clipPath>
+            <clipPath id="rotatingHourMarkerClipPath">
+                <path :d="ringClipPath(visuals.rotatingHourMarker)" clip-rule="evenodd"></path>
+            </clipPath>
+            <clipPath id="weekdayPointerClipPath">
+                <path :d="ringClipPath(visuals.weekdayPointer)" clip-rule="evenodd"></path>
+            </clipPath>
+            <!-- The visible numeral halo uses a rounded SVG text stroke because that has the
+                 cleanest outside shape. This filter only creates a paper backing from closed
+                 glyph alpha so hour and minute markers do not show as dots through counters 
+                 with closed curves like 6, 8, and 9. -->
+            <filter id="numeralInteriorFill" x="-40%" y="-80%" width="180%" height="260%" color-interpolation-filters="sRGB">
+                <feMorphology in="SourceAlpha" operator="dilate" radius="2" result="dilated"></feMorphology>
+                <feMorphology in="dilated" operator="erode" radius="2" result="closed"></feMorphology>
+                <feFlood style="flood-color: var(--clock-paper)" result="paper"></feFlood>
+                <feComposite in="paper" in2="closed" operator="in"></feComposite>
+            </filter>
+            <path id="rotatingMinuteMarker"
+                :d="markerPath(visuals.rotatingMinuteMarker, minuteMarkerSpanDegrees)"></path>
+            <path id="fixedMinuteMarker"
+                :d="markerPath(visuals.fixedMinuteMarker, minuteMarkerSpanDegrees)"></path>
+            <path id="fixedHourMarker"
+                :d="markerPath(visuals.fixedHourMarker, hourMarkerSpanDegrees)"
+                paint-order="fill"></path>
+            <path id="rotatingHourMarker"
+                :d="markerPath(visuals.rotatingHourMarker, hourMarkerSpanDegrees)"
+                paint-order="fill"></path>
+            <path id="weekdayPointer"
+                :d="markerPath(visuals.weekdayPointer, hourMarkerSpanDegrees)"
+                paint-order="fill"></path>
+        </defs>
+        <g id="outerDial">
+            <!-- SVG paints in DOM order; draw fills first, clipped markers next, and boundary strokes last. -->
+            <circle class="outerDialCircleFill" :cx="centerCoordX" :cy="centerCoordY" :r="visuals.outerDial.outerRadius"></circle>
+
+            <g clip-path="url(#fixedMinuteMarkerClipPath)">
+                <g v-for="i in range(60)"
+                    :key="i"
+                    class="minuteMarker"
+                    :transform="rotationAboutCenter(i * params.fixedMinuteMarkerStepDegrees)">
+                    <use href="#fixedMinuteMarker" class="fixedMinuteMarker"></use>
+                </g>
+                <use v-if="visuals.highlightAlignedMarkers"
+                    href="#fixedMinuteMarker"
+                    class="fixedMinuteMarker isMarkerHighlighted"
+                    :transform="rotationAboutCenter(time.minutes * params.fixedMinuteMarkerStepDegrees)"></use>
+            </g>
+
+            <circle class="outerDialCircleStroke" :cx="centerCoordX" :cy="centerCoordY" :r="visuals.outerDial.outerRadius"></circle>
+
+            <g v-if="visuals.showWeekdayRing" id="weekdayScale">
+                <path id="weekdayTextPathClockwise"
+                    class="weekdayTextGuide"
+                    :d="circlePath(visuals.weekdayTextRadius, 1)"></path>
+                <path id="weekdayTextPathCounterclockwise"
+                    class="weekdayTextGuide"
+                    :d="circlePath(visuals.weekdayTextRadius, 0)"></path>
+                <text v-for="(day, i) in visuals.weekdayLabels" class="weekdayName" text-anchor="middle">
+                    <textPath :href="weekdayTextPathHref(i)"
+                        :start-offset.camel="weekdayTextStartOffset(i)"
+                        :text-length.camel="weekdayTextLength()"
+                        :length-adjust.camel="'spacingAndGlyphs'">
+                        {{ day }}
+                    </textPath>
+                </text>
+            </g>
+
+            <g v-for="i in visuals.minutesWithNumerals"
+                :key="i"
+                class="minuteNumeral">
+                <text class="numeralInteriorFill" aria-hidden="true" filter="url(#numeralInteriorFill)"
+                    :x="minuteNumeralPoint(i).x" :y="minuteNumeralPoint(i).y"
+                    text-anchor="middle" dominant-baseline="central">
+                    {{ i }}
+                </text>
+                <text class="numeralText"
+                    :x="minuteNumeralPoint(i).x" :y="minuteNumeralPoint(i).y"
+                    text-anchor="middle" dominant-baseline="central">
+                    {{ i }}
+                </text>
+            </g>
+        </g>
+        <g id="rotatingDial"
+            @transitionend="finishRotatingDialTransition($event)"
+            :transform="rotationTransform(rotatingDialAngleDegrees)">
+            <g clip-path="url(#rotatingMinuteMarkerClipPath)">
+                <use v-for="i in range(params.numberOfMarksForMinutesOnRotatingDial)"
+                    :key="i"
+                    href="#rotatingMinuteMarker"
+                    :transform="rotationAboutCenter(rotatingMinuteMarkerAngleDegrees(i))"
+                    class="rotatingMinuteMarker">
+                </use>
+                <use v-if="visuals.highlightAlignedMarkers"
+                    href="#rotatingMinuteMarker"
+                    class="rotatingMinuteMarker isMarkerHighlighted"
+                    :transform="rotationAboutCenter(rotatingMinuteMarkerAngleDegrees(alignedRotatingMinuteMarkerIndex))"></use>
+            </g>
+            <g clip-path="url(#rotatingHourMarkerClipPath)">
+                <use v-for="i in range(params.numberOfMarksForHoursOnRotatingDial)"
+                    :key="i"
+                    href="#rotatingHourMarker"
+                    :transform="rotationAboutCenter(rotatingHourMarkerAngleDegrees(i))"
+                    class="rotatingHourMarker">
+                </use>
+                <use v-if="visuals.showWeekdayRing"
+                    href="#rotatingHourMarker"
+                    :transform="rotationAboutCenter(0)"
+                    class="weekdayPointerRoot">
+                </use>
+            </g>
+            <g v-if="visuals.showWeekdayRing" clip-path="url(#weekdayPointerClipPath)">
+                <use href="#weekdayPointer"
+                    :transform="rotationAboutCenter(0)"
+                    class="weekdayPointer isWeekdayPointer">
+                </use>
+            </g>
+            <g clip-path="url(#rotatingHourMarkerClipPath)">
+                <use v-if="visuals.highlightAlignedMarkers"
+                    href="#rotatingHourMarker"
+                    class="rotatingHourMarker isMarkerHighlighted"
+                    :transform="rotationAboutCenter(rotatingHourMarkerAngleDegrees(alignedRotatingHourMarkerIndex))">
+                </use>
+            </g>
+        </g>
+        <circle :cx="centerCoordX" :cy="centerCoordY" :r="visuals.rotatingDial.outerRadius" class="rotatingDialOuterCircleStroke"></circle>
+
+        <g id="innerHourMarkers" clip-path="url(#fixedHourMarkerClipPath)">
+            <g v-for="i in range(params.numberOfHours)"
+                :key="i"
+                class="hourMarker"
+                :transform="rotationAboutCenter(fixedHourMarkerAngleDegrees(i))">
+                <use href="#fixedHourMarker" class="fixedHourMarker"></use>
+            </g>
+            <use v-if="visuals.highlightAlignedMarkers"
+                href="#fixedHourMarker"
+                class="fixedHourMarker isMarkerHighlighted"
+                :transform="rotationAboutCenter(fixedHourMarkerAngleDegrees(time.hours % params.numberOfHours))"></use>
+        </g>
+        <circle :cx="centerCoordX" :cy="centerCoordY" :r="visuals.rotatingDial.innerRadius" class="rotatingDialInnerCircleStroke"></circle>
+        <g id="innerHourDial">
+            <g v-for="i in range(params.numberOfHours)"
+                :key="i"
+                class="hourNumeral">
+                <text class="numeralInteriorFill" aria-hidden="true" filter="url(#numeralInteriorFill)"
+                    :x="hourNumeralPoint(i).x" :y="hourNumeralPoint(i).y"
+                    text-anchor="middle" dominant-baseline="central">
+                    {{ i == 0 ? params.numberOfHours : i }}
+                </text>
+                <text class="numeralText"
+                    :x="hourNumeralPoint(i).x" :y="hourNumeralPoint(i).y"
+                    text-anchor="middle" dominant-baseline="central">
+                    {{ i == 0 ? params.numberOfHours : i }}
+                </text>
+            </g>
+        </g>
+        </svg>
+        <div id="controls">
+            <section class="control-section">
+                <h4>Time</h4>
+                <div class="control-row time-row">
+                    <input id="timeInput" type="datetime-local" step="1" v-model="timeInputValue" aria-label="Date and time">
+                </div>
+                <div class="time-actions">
+                    <button @click="useCurrentTime()" :class="{isSelectedOption: selectedTimeOption === 'current'}" :aria-pressed="selectedTimeOption === 'current'">Current</button>
+                    <button @click="setMidnight()" :class="{isSelectedOption: selectedTimeOption === 'midnight'}" :aria-pressed="selectedTimeOption === 'midnight'">Midnight</button>
+                    <button @click="setRandomTime()" :class="{isSelectedOption: selectedTimeOption === 'random'}" :aria-pressed="selectedTimeOption === 'random'">Random</button>
+                </div>
+            </section>
+
+            <section class="control-section">
+                <h4>Presets</h4>
+                <div class="button-grid">
+                    <button @click="setParams('chaoticHours')" :class="{isSelectedOption: isSelectedParamPreset('chaoticHours')}" :aria-pressed="isSelectedParamPreset('chaoticHours')" aria-label="Ordered minutes preset" title="Ordered minutes preset">Ordered minutes</button>
+                    <button @click="setParams('chaoticMinutes')" :class="{isSelectedOption: isSelectedParamPreset('chaoticMinutes')}" :aria-pressed="isSelectedParamPreset('chaoticMinutes')" aria-label="Ordered hours preset" title="Ordered hours preset">Ordered hours</button>
+                    <button @click="setParams('chaoticHoursMinuteGap')" :class="{isSelectedOption: isSelectedParamPreset('chaoticHoursMinuteGap')}" :aria-pressed="isSelectedParamPreset('chaoticHoursMinuteGap')" aria-label="Compact minutes preset" title="Compact minutes preset">Compact minutes</button>
+                    <button @click="setParams('oneWeekRotation')" :class="{isSelectedOption: isSelectedParamPreset('oneWeekRotation')}" :aria-pressed="isSelectedParamPreset('oneWeekRotation')" aria-label="Week rotation preset" title="Week rotation preset">Week rotation</button>
+                </div>
+            </section>
+
+            <section class="control-section">
+                <h4>Theme</h4>
+                <div class="choice-grid theme-grid">
+                    <label class="choice theme-choice">
+                        <input type="radio" v-model="visuals.theme" value="solarized-light" />
+                        <span class="theme-swatch" style="--swatch-paper: #fdf6e3; --swatch-marker: #93a1a1; --swatch-accent: #c14f32;"></span>
+                        Solarized
+                    </label>
+                    <label class="choice theme-choice">
+                        <input type="radio" v-model="visuals.theme" value="catppuccin-latte" />
+                        <span class="theme-swatch" style="--swatch-paper: #eff1f5; --swatch-marker: #9ca0b0; --swatch-accent: #d20f39;"></span>
+                        Catppuccin
+                    </label>
+                    <label class="choice theme-choice">
+                        <input type="radio" v-model="visuals.theme" value="gruvbox-light" />
+                        <span class="theme-swatch" style="--swatch-paper: #fbf1c7; --swatch-marker: #bdae93; --swatch-accent: #cc241d;"></span>
+                        Gruvbox
+                    </label>
+                    <label class="choice theme-choice">
+                        <input type="radio" v-model="visuals.theme" value="nord-night" />
+                        <span class="theme-swatch" style="--swatch-paper: #2e3440; --swatch-marker: #4c566a; --swatch-accent: #bf616a;"></span>
+                        Nord
+                    </label>
+                    <label class="choice theme-choice">
+                        <input type="radio" v-model="visuals.theme" value="dracula" />
+                        <span class="theme-swatch" style="--swatch-paper: #282a36; --swatch-marker: #6272a4; --swatch-accent: #ff5555;"></span>
+                        Dracula
+                    </label>
+                    <label class="choice theme-choice">
+                        <input type="radio" v-model="visuals.theme" value="everforest-dark" />
+                        <span class="theme-swatch" style="--swatch-paper: #2d353b; --swatch-marker: #7a8478; --swatch-accent: #e67e80;"></span>
+                        Everforest Dark
+                    </label>
+                    <label class="choice theme-choice">
+                        <input type="radio" v-model="visuals.theme" value="everforest-light" />
+                        <span class="theme-swatch" style="--swatch-paper: #fdf6e3; --swatch-marker: #a6b0a0; --swatch-accent: #f85552;"></span>
+                        Everforest Light
+                    </label>
+                </div>
+            </section>
+
+            <details class="control-section advanced-parameters">
+                <summary>Advanced parameters</summary>
+                <div class="control-subsection">
+                    <h5>General</h5>
+                    <div class="control-row">
+                        <label for="highlightAlignedMarkers">Highlight alignment:</label>
+                        <input id="highlightAlignedMarkers" class="checkbox-control" type="checkbox" v-model="visuals.highlightAlignedMarkers"/>
+                    </div>
+                    <div class="control-row choice-row">
+                        <span class="labelForInputGroup">Alignment style:</span>
+                        <div class="choice-grid">
+                            <label class="choice"><input type="radio" v-model="params.alignmentMode" value="startExact" />start exact</label>
+                            <label class="choice"><input type="radio" v-model="params.alignmentMode" value="currentBest" />current best</label>
+                        </div>
+                    </div>
+                    <div class="control-row">
+                        <label for="showWeekdayRing">Weekday scale:</label>
+                        <input id="showWeekdayRing" class="checkbox-control" type="checkbox" v-model="visuals.showWeekdayRing"/>
+                    </div>
+                    <div class="control-row">
+                        <label for="allWeekdaysUpright">All weekdays upright:</label>
+                        <input id="allWeekdaysUpright" class="checkbox-control" type="checkbox" v-model="visuals.allWeekdaysUpright"/>
+                    </div>
+                    <div class="control-row choice-row">
+                        <span class="labelForInputGroup">Weekday text:</span>
+                        <div class="choice-grid">
+                            <label class="choice"><input type="radio" v-model="visuals.weekdayText" value="fullEnglish" />SUNDAY</label>
+                            <label class="choice"><input type="radio" v-model="visuals.weekdayText" value="shortEnglish" />SUN</label>
+                            <label class="choice"><input type="radio" v-model="visuals.weekdayText" value="chinese" />星期日</label>
+                        </div>
+                    </div>
+                    <div class="control-row choice-row">
+                        <span class="labelForInputGroup">Direction:</span>
+                        <div class="choice-grid">
+                            <label class="choice"><input type="radio" v-model="params.isRotatingClockwise" :value="true" />clockwise</label>
+                            <label class="choice"><input type="radio" v-model="params.isRotatingClockwise" :value="false" />counter-clockwise</label>
+                        </div>
+                    </div>
+                    <div class="control-row">
+                        <label>Rotation period:</label>
+                        <input disabled :value="(360 / Math.abs(params.rotatingDialDegreesPerHour)) + 'h'"/>
+                    </div>
+                </div>
+                <div class="control-subsection">
+                    <h5>Hour</h5>
+                    <div class="control-row choice-row">
+                        <span class="labelForInputGroup">Hours on dial:</span>
+                        <div class="choice-grid">
+                            <label class="choice"><input type="radio" v-model="params.numberOfHours" :value="12" />12</label>
+                            <label class="choice"><input type="radio" v-model="params.numberOfHours" :value="24" />24</label>
+                        </div>
+                    </div>
+                    <div class="control-row">
+                        <label for="numberOfMarksForHoursOnRotatingDial">Rotating hour marks:</label>
+                        <input id="numberOfMarksForHoursOnRotatingDial" type="number" min="1" max="60" required
+                            :value="params.numberOfMarksForHoursOnRotatingDial"
+                            @input="setNumberInputValue($event, params, 'numberOfMarksForHoursOnRotatingDial')">
+                    </div>
+                    <div class="control-row choice-row">
+                        <span class="labelForInputGroup">Spacing:</span>
+                        <div class="choice-grid">
+                            <label class="choice"><input type="radio" v-model="params.areFixedHoursShorter" :value="true" />shorter</label>
+                            <label class="choice"><input type="radio" v-model="params.areFixedHoursShorter" :value="false" />longer</label>
+                        </div>
+                    </div>
+                    <div class="control-row">
+                        <label for="spacingMultipleForFixedHourMarks">Spacing multiple:</label>
+                        <input id="spacingMultipleForFixedHourMarks" type="number" min="1" step="1" required
+                            :value="params.spacingMultipleForFixedHourMarks"
+                            @input="setNumberInputValue($event, params, 'spacingMultipleForFixedHourMarks')">
+                    </div>
+                </div>
+                <div class="control-subsection">
+                    <h5>Minute</h5>
+                    <div class="control-row">
+                        <label for="numberOfMarksForMinutesOnRotatingDial">Rotating minute marks:</label>
+                        <input id="numberOfMarksForMinutesOnRotatingDial" type="number" disabled="true" v-model="params.numberOfMarksForMinutesOnRotatingDial">
+                    </div>
+                    <div class="control-row choice-row">
+                        <span class="labelForInputGroup">Spacing:</span>
+                        <div class="choice-grid">
+                            <label class="choice"><input type="radio" v-model="params.areFixedMinutesShorter" :value="true" />shorter</label>
+                            <label class="choice"><input type="radio" v-model="params.areFixedMinutesShorter" :value="false" />longer</label>
+                        </div>
+                    </div>
+                    <div class="control-row">
+                        <label for="spacingMultipleForFixedMinuteMarks">Spacing multiple:</label>
+                        <input id="spacingMultipleForFixedMinuteMarks" type="number" min="1" step="1" required
+                            :value="params.spacingMultipleForFixedMinuteMarks"
+                            @input="setNumberInputValue($event, params, 'spacingMultipleForFixedMinuteMarks')">
+                    </div>
+                    <div class="control-row">
+                        <label for="minuteNumeralEvery">Numerals every:</label>
+                        <input id="minuteNumeralEvery" type="number" min="1" max="60" required
+                            :value="visuals.minuteNumeralEvery"
+                            @input="setNumberInputValue($event, visuals, 'minuteNumeralEvery')"/>
+                    </div>
+                    <div class="control-row choice-row">
+                        <span class="labelForInputGroup">Show numerals:</span>
+                        <div class="choice-grid">
+                            <label class="choice"><input id="minuteNumeral0" type="checkbox" v-model="visuals.minuteNumeral0" />0 minute</label>
+                            <label class="choice"><input id="minuteNumeral59" type="checkbox" v-model="visuals.minuteNumeral59" />59 minute</label>
+                        </div>
+                    </div>
+                    <div class="control-row">
+                        <label for="minuteMarkerThicknessFactor">Marker thickness:</label>
+                        <input id="minuteMarkerThicknessFactor" type="number" min="0.1" max="50" step="any" required
+                            :value="visuals.minuteMarkerThicknessFactor"
+                            @input="setNumberInputValue($event, visuals, 'minuteMarkerThicknessFactor')"/>
+                    </div>
+                </div>
+            </details>
+        </div>
+    </div>
+
+
+<hr>
+
+<article>
+    <section>
+        <h2>Single moving indicator</h2>
+        <p>
+            Imagine a clock that only has a single hour hand. That is how tower clocks showed time in the old days, and this is how <a target="_blank" href="https://meistersinger.com">MeisterSinger</a> watches still tell time. It is a clean dial, but less precise than a regular watch with a minute hand.
+        </p>
+
+        <p>
+            If we could tell the slightest change in the position of the hour hand, we could tell time more accurately too.
+            The <a target="_blank" href="https://en.wikipedia.org/wiki/Vernier_acuity">vernier acuity</a> makes this possible. The human eye can tell whether two lines are misaligned by a tiny distance, even when the distance itself would be hard to notice.
+            On a <a target="_blank" href="https://en.wikipedia.org/wiki/Calipers">vernier caliper</a> the auxiliary vernier scale, a modern form of the nonius idea, makes small shifts readable as alignments between marks.
+            This clock uses the same principle.
+        </p>
+    </section>
+
+    <section>
+        <h2>How the alignment moves</h2>
+
+        <p>
+            The reading comes from the closest alignment. A slight turn of the ring can shift that closest match to another mark, so the indicated minute or hour advances by more than the ring itself appears to move.
+        </p>
+    </section>
+
+    <section>
+        <h2>The layout math</h2>
+
+        <p>
+            The speed of the rotation and the positions of the marks are determined by the clock's geometry. The next minute mark must align at 12 o'clock at the beginning of each hour, and the minute alignments must change sixty times faster than the hour alignments.
+        </p>
+
+        <p>
+            Those constraints are enough to calculate the mark layout for a chosen number of hour marks. The math gives several possible layouts, so the final design can choose the one that looks best.
+        </p>
+    </section>
+
+    <section>
+        <h2>Making a physical clock</h2>
+
+        <p>
+            Reading the alignment is easier in the real world than on a screen, especially because the marks can be printed cleanly at clock size. I would like to make a wall clock with this design, but printing on transparent plastic and slowing down the rotation may be tricky.
+        </p>
+
+        <p>
+            One possible simplification is to replace the rotating ring with a rotating circle and move the hours to the outside. To keep the face from getting too busy, the hour markers could become colored segments with thin minute lines over them. In most layouts there is also a gap between the minute marks, which could hold a date window.
+        </p>
+    </section>
+</article>
+
+<script>
+    const app = createClockApp();
+    app.mount("#clockAndControls");
+</script>
+
+  </main>
+</body>
+</html>

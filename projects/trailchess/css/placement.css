@@ -1,0 +1,48 @@
+.pocket {
+    box-shadow: 0 3px 5px rgba(0,0,0,0.3) inset;
+    background: #888;
+    display: flex;
+    border-radius: 3px;
+}
+
+.pocket > piece:hover {
+    border-radius: 3px 0 0 3px;
+    background-color: #aaa;
+}
+
+
+.pocket piece[data-count="0"] {
+    cursor: auto;
+    opacity: 0.1;
+}
+
+.pocket piece {
+    display: block;
+    width: calc(var(--board-size) / 8);
+    height: calc(var(--board-size) / 8);
+    transition: all 150ms;
+    z-index: 2;
+    pointer-events: auto;
+    position: static;
+}
+
+.pocket piece::after {
+    content: attr(data-count);
+    bottom: 0;
+    right: 0;
+    position: absolute;
+    line-height: 0.8em;
+    padding: 3px 0.25em;
+    font-weight: bold;
+    font-size: 1.1em;
+    pointer-events: auto;
+}
+.pocket piece[data-count="0"]::after {
+    content: none;
+}
+.pocket piece::after {
+    background: #d64f00;
+    color: #fff;
+    text-shadow: 0 1px 1px black !important;
+    box-shadow: 0 3px 4px rgba(0,0,0,0.15) inset;
+}
