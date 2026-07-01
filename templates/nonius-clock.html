@@ -639,7 +639,7 @@
                     :transform="rotationAboutCenter(rotatingHourMarkerAngleDegrees(i))"
                     class="rotatingHourMarker">
                 </use>
-                <use v-if="visuals.showWeekdayRing && isCurrentBestAlignment"
+                <use v-if="visuals.showWeekdayRing"
                     href="#rotatingHourMarker"
                     :transform="rotationAboutCenter(0)"
                     class="weekdayPointerRoot">

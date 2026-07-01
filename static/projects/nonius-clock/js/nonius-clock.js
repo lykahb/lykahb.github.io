@@ -257,7 +257,7 @@ function createClockApp() {
             showWeekdayRing: false,
             allWeekdaysUpright: true,
             weekdayText: "shortEnglish",
-            theme: "solarized-light",
+            theme: "everforest-dark",
 
             get radiusOfInnerFixedDial() {
                 return OUTER_DIAL_OUTER_RADIUS * (1 - 1 / PHI);
